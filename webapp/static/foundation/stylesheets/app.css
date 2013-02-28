@@ -20,17 +20,38 @@ hr {
 	text-align: right;
 }
 
-table {
-border-collapse:collapse;
+#scores td, #scores th {
+	border: 1px solid #7D9900;
+	font-size: 0.8em;
+	font-family: 'trebuchet MS',verdana,arial,sans-serif;
+	line-height: 0.5em;
+	text-align: center;
 }
 
-thead tr th:first-child {
-border-left: 0;
+#scores .subindex {
+	color: #C22;
+	background-color: #DDD;
 }
-thead tr th {
-background-color: white;
-color: #333;
-border: 1px solid #7D9900;
-border-top: 0;
-border-right: 0;
+
+#scores {
+	border-collapse: collapse;
+	width: 100%;
+	border: 0px !important;
+}
+
+#scores thead tr th:first-child {
+	border-left: 0;
+}
+#scores thead tr th {
+	background-color: white;
+	color: #333;
+	border-top: 0;
+	border-right: 0;
+}
+
+#scores tbody tr:first-child td{
+	border: 1px solid #7D9900;
+	color: white;
+	font-weight: bold;
+	background-color: #99CC33;
 }

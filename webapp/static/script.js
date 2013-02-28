@@ -2,21 +2,31 @@ function init() {
     init_long_literals();
     if (document.getElementById("flag") != null) {
         setFlag();
-        setRank();
+        setRank("http://localhost:8080/pubby/static/rankings", "globalRank", "globalScore");
+        setRank("http://localhost:8080/pubby/static/readiness", "readRank", "readScore");
+        setRank("http://localhost:8080/pubby/static/impact", "impactRank", "impactScore");
+        setRank("http://localhost:8080/pubby/static/theweb", "webRank", "webScore");
+        setRank("http://localhost:8080/pubby/static/ci", "ciRank", "ciScore");
+        setRank("http://localhost:8080/pubby/static/ii", "iiRank", "iiScore");
+        setRank("http://localhost:8080/pubby/static/wu", "wuRank", "wuScore");
+        setRank("http://localhost:8080/pubby/static/wc", "wcRank", "wcScore");
+        setRank("http://localhost:8080/pubby/static/social", "socialRank", "socialScore");
+        setRank("http://localhost:8080/pubby/static/economic", "economicRank", "economicScore");
+        setRank("http://localhost:8080/pubby/static/political", "politicalRank", "politicalScore");
     }
 }
 
-function setRank() {
+function setRank(fileName, rankClassName, scoreClassName) {
     $.getJSON(
-     'http://localhost:8080/pubby/static/rankings',
+     fileName,
      { key: 'countryName', otherkey: true },
      function (data) {
          for (var i = 0; i < data.results.bindings.length; i++) {
              if (document.getElementById("title").textContent === data.results.bindings[i].countryName.value) {
-                 Array.prototype.slice.call(document.getElementsByClassName("globalRank"), 0).forEach(function (n) {
+                 Array.prototype.slice.call(document.getElementsByClassName(rankClassName), 0).forEach(function (n) {
                      n.textContent = textContent = "" + (i + 1);
                  });
-                 Array.prototype.slice.call(document.getElementsByClassName("globalScore"), 0).forEach(function (n) {
+                 Array.prototype.slice.call(document.getElementsByClassName(scoreClassName), 0).forEach(function (n) {
                      n.textContent = textContent = "" + Math.round(data.results.bindings[i].value.value * 100) / 100;
                  });
                  }

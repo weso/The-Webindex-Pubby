@@ -27,7 +27,7 @@
   
     <div class="row">
 		<div class="six columns">
-			<table>
+			<table id="scores">
 				<thead>
 					<tr>
 						<th></th>
@@ -38,23 +38,58 @@
 				<tbody>
 					<tr>
 						<td>Overall Index</td>
-						<td class="globalScore">Score</td>
-						<td class="globalRank">Rank</td>
+						<td class="globalScore"></td>
+						<td class="globalRank"></td>
 					</tr>
-					<tr>
+					<tr class="subindex">
 						<td>Readiness</td>
 						<td class="readScore"></td>
 						<td class="readRank"></td>
 					</tr>
 					<tr>
+						<td>Communications Infrastructure</td>
+						<td class="ciScore"></td>
+						<td class="ciRank"></td>
+					</tr>
+					<tr>
+						<td>Institutional Infrastructure</td>
+						<td class="iiScore"></td>
+						<td class="iiRank"></td>
+					</tr>
+					<tr class="subindex">
 						<td>The Web</td>
 						<td class="webScore"></td>
 						<td class="webRank"></td>
 					</tr>
 					<tr>
+						<td>Web Use</td>
+						<td class="wuScore"></td>
+						<td class="wuRank"></td>
+					</tr>
+					<tr>
+						<td>Web Content</td>
+						<td class="wcScore"></td>
+						<td class="wcRank"></td>
+					</tr>
+					<tr class="subindex">
 						<td>Impact</td>
 						<td class="impactScore"></td>
 						<td class="impactRank"></td>
+					</tr>
+					<tr>
+						<td>Social Impact</td>
+						<td class="socialScore"></td>
+						<td class="socialRank"></td>
+					</tr>
+					<tr>
+						<td>Economic Impact</td>
+						<td class="economicScore"></td>
+						<td class="economicRank"></td>
+					</tr>
+					<tr>
+						<td>Political Impact</td>
+						<td class="politicalScore"></td>
+						<td class="politicalRank"></td>
 					</tr>
 				</tbody>
 			</table>
