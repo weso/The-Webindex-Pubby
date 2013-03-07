@@ -10,10 +10,9 @@
 	<script type="text/javascript" src="${server_base}static/foundation/js/vendor/custom.modernizr.js"></script>
 	<script type="text/javascript" src="${server_base}static/foundation/js/foundation.min.js"></script>
 	<script type="text/javascript" src="${server_base}static/script.js"></script>
-	<script src="http://code.jquery.com/ui/1.10.1/jquery-ui.js"></script>
 	
   </head>
-  <body onLoad="init('${server_base}');">
+  <body onLoad="init();">
   
 	<header class="row">
 		<div class="large-6 columns">
