@@ -1,0 +1,106 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title>$title | $project_name</title>
+#if ($rdf_link)
+    <link rel="alternate" type="application/rdf+xml" href="$rdf_link" title="RDF" />
+#end
+	<link rel="stylesheet" type="text/css" href="${server_base}static/foundation/css/foundation.min.css" />
+	<link rel="stylesheet" type="text/css" href="${server_base}static/foundation/css/app.css" />
+	<script type="text/javascript" src="${server_base}static/foundation/js/vendor/jquery.js"></script>
+	<script type="text/javascript" src="${server_base}static/foundation/js/vendor/custom.modernizr.js"></script>
+	<script type="text/javascript" src="${server_base}static/foundation/js/foundation.min.js"></script>
+	<script type="text/javascript" src="${server_base}static/script.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.1/jquery-ui.js"></script>
+	
+  </head>
+  <body onLoad="init('${server_base}');">
+  
+	<header class="row">
+		<div class="large-6 columns">
+			<img src="${server_base}static/web-index.png" alt="Web Index">
+			<a href="http://thewebindex.org" class="row">thewebindex.org</a>
+		</div>
+		<div class="large-6 columns">
+			<h5 class="right">2012 Rank <span id="rank">${globalRank}</span></h5>
+		</div>
+		<hr/>
+	</header>
+  
+    <div class="row">
+		<div class="large-6 columns">
+			<table id="scores">
+				<thead>
+					<tr>
+						<th></th>
+						<th>Score</th>
+						<th>Rank</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Overall Index</td>
+						<td>${globalScore}</td>
+						<td>${globalRank}</td>
+					</tr>
+					<tr class="subindex">
+						<td>Readiness</td>
+						<td>${readinessScore}</td>
+						<td>${readinessRank}</td>
+					</tr>
+					<tr>
+						<td>Communications Infrastructure</td>
+						<td>${comunicationsInfrastructureScore}</td>
+						<td>${comunicationsInfrastructureRank}</td>
+					</tr>
+					<tr>
+						<td>Institutional Infrastructure</td>
+						<td>${institutionalInfrastructureScore}</td>
+						<td>${institutionalInfrastructureRank}</td>
+					</tr>
+					<tr class="subindex">
+						<td>The Web</td>
+						<td>${webScore}</td>
+						<td>${webRank}</td>
+					</tr>
+					<tr>
+						<td>Web Use</td>
+						<td>${webUseScore}</td>
+						<td>${webUseRank}</td>
+					</tr>
+					<tr>
+						<td>Web Content</td>
+						<td>${webContentScore}</td>
+						<td>${webContentRank}</td>
+					</tr>
+					<tr class="subindex">
+						<td>Impact</td>
+						<td>${impactScore}</td>
+						<td>${impactRank}</td>
+					</tr>
+					<tr>
+						<td>Social Impact</td>
+						<td>${socialImpactScore}</td>
+						<td>${socialImpactRank}</td>
+					</tr>
+					<tr>
+						<td>Economic Impact</td>
+						<td>${economicImpactScore}</td>
+						<td>${economicImpactRank}</td>
+					</tr>
+					<tr>
+						<td>Political Impact</td>
+						<td>${politicalImpactScore}</td>
+						<td>${politicalImpactRank}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="large-6 columns country_name">
+			<h1 id="title">$title</h1>
+			<img src="${flagSrc}" alt=$title id="flag"/>
+		</div>
+	</div>
+
+#if ($back_uri)
+	<p><a href="$back_uri">Back to $back_label</a></p>
+#end
