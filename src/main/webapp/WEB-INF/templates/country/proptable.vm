@@ -1,49 +1,53 @@
 <div class="row">
-    <table class="description">
-      <tr><th width="25%">Property</th><th>Value</th></tr>
+	<!--<div class="section-container tabs" data-section>-->
+		<section class="section large-8 columns">
+			<p class="title">Properties</p>
+			<div class="content">
+				<table class="description">
+   					<tr><th width="25%">Property</th><th>Value</th></tr>
 #foreach ($property in $properties)
 #if ($velocityCount % 2 == 0)
 #set ($odd_even = "even")
 #else
 #set ($odd_even = "odd")
 #end
-      <tr class="$odd_even">
-        <td class="property">
+					<tr class="$odd_even">
+						<td class="property">
 #if ($property.isInverse())
-          <small>is</small>
+							<small>is</small>
 #end
 #if ($property.hasPrefix())
-          <a class="uri" href="$property.URI" title="$property.URI"><small>$property.Prefix:</small>$property.LocalName</a>
+							<a class="uri" href="$property.URI" title="$property.URI"><small>$property.Prefix:</small>$property.LocalName</a>
 #else
-          <a class="uri" href="$property.URI" title="$property.URI"><small>?:</small>$property.LocalName</a>
+							<a class="uri" href="$property.URI" title="$property.URI"><small>?:</small>$property.LocalName</a>
 #end
 #if ($property.isInverse())
-          <small>of</small>
+							<small>of</small>
 #end
-        </td>
-        <td>
-          <ul>
+						</td>
+						<td>
+							<ul>
 #foreach ($value in $property.Values)
-            <li>
+								<li>
 #if ($value.Node.isURI())
 #if ($value.hasPrefix())
-              <a class="uri" href="$value.Node.URI" title="$value.Node.URI"><small>$value.Prefix:</small>$value.LocalName</a>
+									<a class="uri" href="$value.Node.URI" title="$value.Node.URI"><small>$value.Prefix:</small>$value.LocalName</a>
 #else
-              <small>&lt;</small><a class="uri" href="$value.Node.URI">$value.Node.URI</a><small>&gt;</small>
+									<small>&lt;</small><a class="uri" href="$value.Node.URI">$value.Node.URI</a><small>&gt;</small>
 #end
 #elseif ($value.Node.isBlank())
-              <span class="blank">_:$value.Node.BlankNodeLabel</span>
+									<span class="blank">_:$value.Node.BlankNodeLabel</span>
 #elseif ($value.Node.isLiteral())
-              <span class="literal">$value.Node.LiteralLexicalForm
+									<span class="literal">$value.Node.LiteralLexicalForm
 #if ($value.DatatypeLabel)
-                <small> ($value.DatatypeLabel)</small>
+										<small> ($value.DatatypeLabel)</small>
 #end
 #if ($value.Node.LiteralLanguage != "")
-                <small> ($value.Node.LiteralLanguage)</small>
+										<small> ($value.Node.LiteralLanguage)</small>
 #end
-              </span>
+									</span>
 #end
-            </li>
+								</li>
 #end
 #if ($property.BlankNodeCount > 0)
 #if ($property.BlankNodeCount == 1)
@@ -52,14 +56,23 @@
 #set ($text = "$property.BlankNodeCount anonymous resources")
 #end
 #if ($property.PathPageURL)
-            <li>[<a href="$property.PathPageURL">$text</a>]</li>
+								<li>[<a href="$property.PathPageURL">$text</a>]</li>
 #else
-            <li>[$text]</li>
+								<li>[$text]</li>
 #end
 #end
-          </ul>
-        </td>
-      </tr>
+							</ul>
+						</td>
+					</tr>
 #end
-    </table>
+				</table>
+			</div>
+		</section>
+		<section class="section large-4 columns">
+			<p class="title">Map</p>
+			<div class="content">
+				<div id="world-map"></div>
+			</div>
+		</section>
+	<!--</div>-->
 </div>

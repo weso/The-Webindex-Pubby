@@ -56,3 +56,7 @@ hr {
 	font-weight: bold;
 	background-color: #99CC33;
 }
+
+#world-map, #world-map svg, #world-map div {
+	max-height:300px;
+}

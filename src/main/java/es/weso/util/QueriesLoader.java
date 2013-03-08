@@ -1,4 +1,4 @@
-package es.weso.sparql;
+package es.weso.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,10 +6,6 @@ import java.util.Collection;
 import java.util.Properties;
 
 /**
- * ORBITA Project
- * Components:
- * - WESO Research Group, University of Oviedo
- * - Treelogic S.L.
  *
  * @author Alejandro Montes García
  * @since 24/10/12 - 11:21
