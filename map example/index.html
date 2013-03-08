@@ -1,0 +1,27 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="styles/jquery-jvectormap-1.2.2.css" />
+    <!--<script>
+        var map = null;
+
+        var f = function testFunction(e, code, isSelected, selectedRegions) {
+            alert(e);
+        }
+    </script>-->
+    <script src="scripts/jquery-1.6.2.js"></script>
+    <script src="scripts/jquery-jvectormap-1.2.2.min.js"></script>
+    <script src="scripts/wescountry.js"></script>
+    <script src="scripts/onregionselected.js"></script>
+    <script src="scripts/world.map.js"></script>
+    <title>Map test</title>
+</head>
+<body>
+
+    <div id="world-map" style="width: 1200px; height: 600px"></div>
+    <button onclick="drawWorldMap('#world-map', regionSelectedFunction)">Dibujar mapa</button>
+    <button onclick="drawMapCenterOnACountry('#world-map', regionSelectedFunction, 'ES', 40.46, -3.75)">Dibujar mapa centrado en España</button>
+</body>
+</html>
