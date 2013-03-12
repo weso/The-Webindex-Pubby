@@ -1,13 +1,7 @@
-﻿var maxCountriesToCompare = 4;
-
-var regionSelectedFunction = function (e, code, isSelected, selectedRegions) {
+﻿var regionSelectedFunction = function (e, code, isSelected, selectedRegions) {
+    $('#bt_create').removeAttr('disabled')
     if (isSelected) {
         var countryName = map.getRegionName(code);
-        if (selectedRegions.length <= maxCountriesToCompare) {
-            centerMapOnRegions(map, selectedRegions);
-        } else {
-            removeSelectedCountry(selectedRegions, code);
-        }
     }
 }
 
@@ -22,3 +16,4 @@ function removeSelectedCountry(selectedRegions, code) {
     map.clearSelectedRegions();
     map.setSelectedRegions(selected.split(','));
 }
+

@@ -1,5 +1,5 @@
 #set ($has_text = false)
-    <div id="footer">
+    <footer class="row">
 #if ($sparql_endpoint)
       This page shows information obtained from the SPARQL endpoint at <a class="sparql-uri" href="$sparql_endpoint">$sparql_endpoint</a>.<br />
 #end
@@ -29,6 +29,6 @@
       <a href="$openlink_link">Browse in OpenLink Browser</a>
 #set ($has_text = true)
 #end
-    </div>
+    </footer>
   </body>
 </html>

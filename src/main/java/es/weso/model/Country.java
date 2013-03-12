@@ -25,23 +25,23 @@ import de.fuberlin.wiwiss.pubby.ResourceDescription.Value;
 import es.weso.model.cacheable.Rank;
 import es.weso.model.cacheable.SerializableRank;
 import es.weso.util.QueriesLoader;
-import es.weso.util.VocabLoader;
+import es.weso.util.Vocab;
 
 public class Country {
 
 	public Map<String, String> getCountryData(
 			Map<String, List<Value>> properties) {
 		Map<String, String> context = new HashMap<String, String>();
-		String name = properties.get(VocabLoader.getVocab("rdfs.label")).get(0)
+		String name = properties.get(Vocab.getVocab("rdfs.label")).get(0)
 				.getNode().toString();
 
-		String contry_code = properties.get(VocabLoader.getVocab("iso-alpha2"))
+		String contry_code = properties.get(Vocab.getVocab("iso-alpha2"))
 				.get(0).getNode().toString();
 
-		String lat = properties.get(VocabLoader.getVocab("geo.lat")).get(0)
+		String lat = properties.get(Vocab.getVocab("geo.lat")).get(0)
 				.getNode().getLiteralValue().toString();
 
-		String lon = properties.get(VocabLoader.getVocab("geo.long")).get(0)
+		String lon = properties.get(Vocab.getVocab("geo.long")).get(0)
 				.getNode().getLiteralValue().toString();
 
 		context.put("lat", lat);
@@ -76,23 +76,41 @@ public class Country {
 		try {
 			flag = memcachedClient.get(key);
 			if (flag == null) {
-				try {
-					flag = performFlagQuery(countryName);
-					memcachedClient.set(key, 2592000, flag);
-				} catch (QueryException e) {
-					flag = "";
-					// TODO Log error
-				}
+				flag = tryQuery(countryName, memcachedClient, key);
 			}
 		} catch (TimeoutException e) {
-			// TODO Log errors
-			flag = performFlagQuery(countryName);
+			flag = tryQuery(countryName);
 		} catch (InterruptedException e) {
-			flag = performFlagQuery(countryName);
+			flag = tryQuery(countryName);
 		} catch (MemcachedException e) {
-			flag = performFlagQuery(countryName);
+			flag = tryQuery(countryName);
 		}
 		context.put("flagSrc", flag);
+	}
+
+	private String tryQuery(String countryName,
+			MemcachedClient memcachedClient, String key)
+			throws TimeoutException, InterruptedException, MemcachedException {
+		String flag;
+		try {
+			flag = performFlagQuery(countryName);
+			memcachedClient.set(key, 2592000, flag);
+		} catch (QueryException e) {
+			flag = "";
+			// TODO Log error
+		}
+		return flag;
+	}
+
+	private String tryQuery(String countryName) {
+		String flag;
+		try {
+			flag = performFlagQuery(countryName);
+		} catch (QueryException qe) {
+			flag = "";
+			// TODO Log error
+		}
+		return flag;
 	}
 
 	private String performFlagQuery(String countryName) {

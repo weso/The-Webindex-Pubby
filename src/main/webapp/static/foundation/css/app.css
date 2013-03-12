@@ -60,3 +60,7 @@ hr {
 #world-map, #world-map svg, #world-map div {
 	max-height:300px;
 }
+
+.description {
+	margin: auto;
+}

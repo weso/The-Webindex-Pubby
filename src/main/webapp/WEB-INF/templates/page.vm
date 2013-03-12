@@ -3,10 +3,6 @@
 	<div class="image"><img src="$image" alt="Depiction of $title" /></div>
 #end
 
-#if ($comment)
-    <p>$comment</p>
-#end
-
 #if (!$properties.isEmpty())
 	#parse("${type}/proptable.vm")
 #else
@@ -22,4 +18,4 @@
 	<a href="#meta" onclick="showAllMetadata('metadata-tables')">expand all</a>
 #end
 
-#parse("${type}/footer.vm")
+#parse("footer.vm")

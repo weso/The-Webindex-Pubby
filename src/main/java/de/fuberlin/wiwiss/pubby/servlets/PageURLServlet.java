@@ -13,13 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.context.Context;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -29,8 +22,9 @@ import de.fuberlin.wiwiss.pubby.MappedResource;
 import de.fuberlin.wiwiss.pubby.ResourceDescription;
 import de.fuberlin.wiwiss.pubby.ResourceDescription.Value;
 import es.weso.model.Country;
-import es.weso.util.QueriesLoader;
-import es.weso.util.VocabLoader;
+import es.weso.model.Organization;
+import es.weso.model.Region;
+import es.weso.util.Vocab;
 
 /**
  * A servlet for serving the HTML page describing a resource. Invokes a Velocity
@@ -98,7 +92,7 @@ public class PageURLServlet extends BaseURLServlet {
 			Map<String, String> nsSet = metadata.getNsPrefixMap();
 			nsSet.putAll(description.getNsPrefixMap());
 			context.put("prefixes", nsSet.entrySet());
-			context.put("blankNodesMap", new HashMap());
+			context.put("blankNodesMap", new HashMap<Object, Object>());
 		} catch (Exception e) {
 			context.put("metadata", Boolean.FALSE);
 		}
@@ -117,7 +111,7 @@ public class PageURLServlet extends BaseURLServlet {
 	private void getProperties(ResourceDescription resourceDescription,
 			Context context) {
 		Map<String, List<Value>> properties = resourceDescription.asMap();
-		String type = properties.get(VocabLoader.getVocab("rdf.type")).get(0)
+		String type = properties.get(Vocab.getVocab("rdf.type")).get(0)
 				.getLocalName();
 		if (type.equalsIgnoreCase("country")) {
 			Map<String, String> countryProperties = new Country()
@@ -126,9 +120,16 @@ public class PageURLServlet extends BaseURLServlet {
 				context.put(entry.getKey(), entry.getValue());
 			}
 			context.put("type", "country");
-		} else if (type.equalsIgnoreCase("region")){
-			
+		} else if (type.equalsIgnoreCase("region")) {
+			context.put("countries", new Region().getCountryCodes(properties));
 			context.put("type", "region");
+		} else if (type.equalsIgnoreCase("organization")) {
+			Map<String, String> orgInfo = new Organization()
+					.getOrganizationInfo(properties);
+			for (Map.Entry<String, String> entry : orgInfo.entrySet()) {
+				context.put(entry.getKey(), entry.getValue());
+			}
+			context.put("type", "organization");
 		} else {
 			context.put("type", ".");
 		}
