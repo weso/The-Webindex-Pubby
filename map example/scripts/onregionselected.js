@@ -1,18 +1,11 @@
-﻿var maxCountriesToCompare = 4;
-
-var regionSelectedFunction = function (e, code, isSelected, selectedRegions) {
+﻿var regionSelectedFunction = function (e, code, isSelected, selectedRegions) {
+    $('#bt_create').removeAttr('disabled')
     if (isSelected) {
         var countryName = map.getRegionName(code);
-        if (selectedRegions.length <= maxCountriesToCompare) {
-            centerMapOnRegions(map, selectedRegions);
-            alert('Añadir país a la comparación: ' + countryName + ' ' + code);
-        } else {
-            removeSelectedCountry(selectedRegions, code);
-            alert('No se pueden añadir mas países a la comparación');
-        }
+        //centerMapOnRegions(map, selectedRegions);
     } else {
         //centerMapOnRegions(map, selectedRegions);
-        alert('Quitar de la compración')
+        //alert('Quitar de la compración')
     }
 }
 
