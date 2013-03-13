@@ -24,7 +24,7 @@ import de.fuberlin.wiwiss.pubby.ResourceDescription.Value;
 import es.weso.model.Country;
 import es.weso.model.Organization;
 import es.weso.model.Region;
-import es.weso.util.Vocab;
+import es.weso.util.Conf;
 
 /**
  * A servlet for serving the HTML page describing a resource. Invokes a Velocity
@@ -104,14 +104,17 @@ public class PageURLServlet extends BaseURLServlet {
 	/**
 	 * Checks the type of an entity and gets the data from it
 	 * 
-	 * @author Alejandro Montes García <alejandro.montes@weso.es>
+	 * @author <a href="http://alejandro-montes.appspot.com">Alejandro Montes
+	 *         GarcÃ­a</a>
 	 * @param resourceDescription
+	 *            The {@link ResourceDescription} of the entity
 	 * @param context
+	 *            The {@link Context} where the metadata will be stored
 	 */
 	private void getProperties(ResourceDescription resourceDescription,
 			Context context) {
 		Map<String, List<Value>> properties = resourceDescription.asMap();
-		String type = properties.get(Vocab.getVocab("rdf.type")).get(0)
+		String type = properties.get(Conf.getVocab("rdf.type")).get(0)
 				.getLocalName();
 		if (type.equalsIgnoreCase("country")) {
 			Map<String, String> countryProperties = new Country()

@@ -24,7 +24,7 @@ public class ModelDataSource implements DataSource {
 	public String getEndpointURL() {
 		return null;
 	}
-	
+
 	public String getResourceDescriptionURL(String resourceURI) {
 		return null;
 	}
@@ -34,23 +34,23 @@ public class ModelDataSource implements DataSource {
 		addResourceDescription(model.getResource(resourceURI), result);
 		return result;
 	}
-	
+
 	public Model getAnonymousPropertyValues(String resourceURI,
 			Property property, boolean isInverse) {
 		Resource r = model.getResource(resourceURI);
 		Model result = ModelFactory.createDefaultModel();
-		StmtIterator it = isInverse
-				? model.listStatements(null, property, r)
+		StmtIterator it = isInverse ? model.listStatements(null, property, r)
 				: r.listProperties(property);
 		while (it.hasNext()) {
 			Statement stmt = it.nextStatement();
 			RDFNode node = isInverse ? stmt.getSubject() : stmt.getObject();
-			if (!node.isAnon()) continue;
-			addResourceDescription((Resource) node.as(Resource.class), result); 
+			if (!node.isAnon())
+				continue;
+			addResourceDescription((Resource) node.as(Resource.class), result);
 		}
 		return result;
 	}
-	
+
 	private void addResourceDescription(Resource resource, Model targetModel) {
 		targetModel.add(model.listStatements(resource, null, (RDFNode) null));
 		targetModel.add(model.listStatements(null, null, resource));

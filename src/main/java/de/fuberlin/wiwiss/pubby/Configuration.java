@@ -33,10 +33,11 @@ public class Configuration {
 	private final Collection<Property> commentProperties;
 	private final Collection<Property> imageProperties;
 	private final Collection<Dataset> datasets;
-	
+
 	public Configuration(Model configurationModel) {
 		model = configurationModel;
-		StmtIterator it = model.listStatements(null, RDF.type, CONF.Configuration);
+		StmtIterator it = model.listStatements(null, RDF.type,
+				CONF.Configuration);
 		if (!it.hasNext()) {
 			throw new IllegalArgumentException(
 					"No conf:Configuration found in configuration model");
@@ -51,17 +52,20 @@ public class Configuration {
 		labelProperties = new ArrayList<Property>();
 		it = model.listStatements(config, CONF.labelProperty, (RDFNode) null);
 		while (it.hasNext()) {
-			labelProperties.add(it.nextStatement().getObject().as(Property.class));
+			labelProperties.add(it.nextStatement().getObject()
+					.as(Property.class));
 		}
 		if (labelProperties.isEmpty()) {
 			labelProperties.add(RDFS.label);
 			labelProperties.add(DC.title);
-			labelProperties.add(model.createProperty("http://xmlns.com/foaf/0.1/name"));
+			labelProperties.add(model
+					.createProperty("http://xmlns.com/foaf/0.1/name"));
 		}
 		commentProperties = new ArrayList<Property>();
 		it = model.listStatements(config, CONF.commentProperty, (RDFNode) null);
 		while (it.hasNext()) {
-			commentProperties.add(it.nextStatement().getObject().as(Property.class));
+			commentProperties.add(it.nextStatement().getObject()
+					.as(Property.class));
 		}
 		if (commentProperties.isEmpty()) {
 			commentProperties.add(RDFS.comment);
@@ -70,13 +74,15 @@ public class Configuration {
 		imageProperties = new ArrayList<Property>();
 		it = model.listStatements(config, CONF.imageProperty, (RDFNode) null);
 		while (it.hasNext()) {
-			imageProperties.add(it.nextStatement().getObject().as(Property.class));
+			imageProperties.add(it.nextStatement().getObject()
+					.as(Property.class));
 		}
 		if (imageProperties.isEmpty()) {
-			imageProperties.add(model.createProperty("http://xmlns.com/foaf/0.1/depiction"));
+			imageProperties.add(model
+					.createProperty("http://xmlns.com/foaf/0.1/depiction"));
 		}
-		
-		prefixes = new PrefixMappingImpl();		
+
+		prefixes = new PrefixMappingImpl();
 		if (config.hasProperty(CONF.usePrefixesFrom)) {
 			it = config.listProperties(CONF.usePrefixesFrom);
 			while (it.hasNext()) {
@@ -97,25 +103,28 @@ public class Configuration {
 		while (it.hasNext()) {
 			Dataset dataset = it.next();
 			if (dataset.isDatasetURI(datasetURI)) {
-				return dataset.getMappedResourceFromDatasetURI(datasetURI, this);
+				return dataset
+						.getMappedResourceFromDatasetURI(datasetURI, this);
 			}
 		}
 		return null;
 	}
 
-	public MappedResource getMappedResourceFromRelativeWebURI(String relativeWebURI, boolean isResourceURI) {
+	public MappedResource getMappedResourceFromRelativeWebURI(
+			String relativeWebURI, boolean isResourceURI) {
 		Iterator<Dataset> it = datasets.iterator();
 		while (it.hasNext()) {
 			Dataset dataset = it.next();
-			MappedResource resource = dataset.getMappedResourceFromRelativeWebURI(
-					relativeWebURI, isResourceURI, this);
+			MappedResource resource = dataset
+					.getMappedResourceFromRelativeWebURI(relativeWebURI,
+							isResourceURI, this);
 			if (resource != null) {
 				return resource;
 			}
 		}
 		return null;
 	}
-	
+
 	public PrefixMapping getPrefixes() {
 		return prefixes;
 	}
@@ -123,30 +132,30 @@ public class Configuration {
 	public Collection<Property> getLabelProperties() {
 		return labelProperties;
 	}
-	
+
 	public Collection<Property> getCommentProperties() {
 		return commentProperties;
 	}
-	
+
 	public Collection<Property> getImageProperties() {
 		return imageProperties;
 	}
-	
+
 	public String getDefaultLanguage() {
 		if (!config.hasProperty(CONF.defaultLanguage)) {
 			return null;
 		}
 		return config.getProperty(CONF.defaultLanguage).getString();
 	}
-	
+
 	public MappedResource getIndexResource() {
 		if (!config.hasProperty(CONF.indexResource)) {
 			return null;
 		}
-		return getMappedResourceFromDatasetURI(
-				config.getProperty(CONF.indexResource).getResource().getURI());
+		return getMappedResourceFromDatasetURI(config
+				.getProperty(CONF.indexResource).getResource().getURI());
 	}
-	
+
 	public String getProjectLink() {
 		return config.getProperty(CONF.projectHomepage).getResource().getURI();
 	}

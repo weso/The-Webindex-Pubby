@@ -18,25 +18,27 @@ public class RootServlet extends BaseServlet {
 
 	private static final long serialVersionUID = -4812044304620174504L;
 
-	protected boolean doGet(String relativeURI,
-			HttpServletRequest request, HttpServletResponse response,
-			Configuration config)
+	protected boolean doGet(String relativeURI, HttpServletRequest request,
+			HttpServletResponse response, Configuration config)
 			throws IOException, ServletException {
-		
+
 		// static/ directory handled by default servlet
 		if (relativeURI.startsWith("static/")) {
-			getServletContext().getNamedDispatcher("default").forward(request, response);
+			getServletContext().getNamedDispatcher("default").forward(request,
+					response);
 			return true;
 		}
-		
-		// If index resource is defined, redirect requests for the index page to it
+
+		// If index resource is defined, redirect requests for the index page to
+		// it
 		if ("".equals(relativeURI) && config.getIndexResource() != null) {
 			response.sendRedirect(config.getIndexResource().getWebURI());
 			return true;
 		}
-		
+
 		// Assume it's a resource URI -- will produce 404 if not
-		getServletContext().getNamedDispatcher("WebURIServlet").forward(request, response);
+		getServletContext().getNamedDispatcher("WebURIServlet").forward(
+				request, response);
 		return true;
 	}
 }

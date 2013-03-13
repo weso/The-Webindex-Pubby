@@ -17,10 +17,9 @@ import de.fuberlin.wiwiss.pubby.negotiation.PubbyNegotiator;
 import de.fuberlin.wiwiss.pubby.servlets.RequestParamHandler;
 
 /**
- * Calls into Joseki to send a Jena model over HTTP. This gives us
- * content negotiation and all the other tricks supported by Joseki
- * for free. This has to be in the Joseki package because some
- * required methods are not visible.
+ * Calls into Joseki to send a Jena model over HTTP. This gives us content
+ * negotiation and all the other tricks supported by Joseki for free. This has
+ * to be in the Joseki package because some required methods are not visible.
  * 
  * @author Richard Cyganiak (richard@cyganiak.de)
  * @version $Id: ModelResponse.java,v 1.1 2007/02/07 13:49:24 cyganiak Exp $
@@ -29,8 +28,8 @@ public class ModelResponse {
 	private final Model model;
 	private final HttpServletRequest request;
 	private final HttpServletResponse response;
-	
-	public ModelResponse(Model model, HttpServletRequest request, 
+
+	public ModelResponse(Model model, HttpServletRequest request,
 			HttpServletResponse response) {
 
 		// Handle ?output=format request parameter
@@ -38,12 +37,12 @@ public class ModelResponse {
 		if (handler.isMatchingRequest()) {
 			request = handler.getModifiedRequest();
 		}
-		
+
 		this.model = model;
 		this.request = request;
 		this.response = response;
 	}
-	
+
 	public void serve() {
 		// Error hendling is still quite a mess here.
 		try {
@@ -55,12 +54,12 @@ public class ModelResponse {
 				response.sendError(
 						HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 						"JenaException: " + jEx.getMessage());
-            } catch (IOException e) {
-            	throw new RuntimeException(e);
-            }
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
-	
+
 	private void doResponseModel() throws IOException {
 		response.addHeader("Vary", "Accept");
 		ContentTypeNegotiator negotiator = PubbyNegotiator.getDataNegotiator();
@@ -77,8 +76,8 @@ public class ModelResponse {
 		response.setContentType(bestMatch.getMediaType());
 		getWriter(bestMatch.getMediaType()).write(model, response);
 		response.getOutputStream().flush();
-    }
-	
+	}
+
 	private ModelWriter getWriter(String mediaType) {
 		if ("application/rdf+xml".equals(mediaType)) {
 			return new RDFXMLWriter();
@@ -91,31 +90,39 @@ public class ModelResponse {
 		}
 		return new NTriplesWriter();
 	}
-	
+
 	private interface ModelWriter {
-		void write(Model model, HttpServletResponse response) throws IOException;
+		void write(Model model, HttpServletResponse response)
+				throws IOException;
 	}
-	
+
 	private class NTriplesWriter implements ModelWriter {
-		public void write(Model model, HttpServletResponse response) throws IOException {
-			model.getWriter("N-TRIPLES").write(model, response.getOutputStream(), null);
+		public void write(Model model, HttpServletResponse response)
+				throws IOException {
+			model.getWriter("N-TRIPLES").write(model,
+					response.getOutputStream(), null);
 		}
 	}
-	
+
 	private class TurtleWriter implements ModelWriter {
-		public void write(Model model, HttpServletResponse response) throws IOException {
-			model.getWriter("TURTLE").write(model, response.getOutputStream(), null);
+		public void write(Model model, HttpServletResponse response)
+				throws IOException {
+			model.getWriter("TURTLE").write(model, response.getOutputStream(),
+					null);
 		}
 	}
 
 	private class RDFXMLWriter implements ModelWriter {
-		public void write(Model model, HttpServletResponse response) throws IOException {
+		public void write(Model model, HttpServletResponse response)
+				throws IOException {
 			RDFWriter writer = model.getWriter("RDF/XML-ABBREV");
 			writer.setProperty("showXmlDeclaration", "true");
 			// From Joseki -- workaround for the j.cook.up bug.
 			writer.setProperty("blockRules", "propertyAttr");
-			writer.write(model, 
-					new OutputStreamWriter(response.getOutputStream(), "utf-8"), null);
+			writer.write(
+					model,
+					new OutputStreamWriter(response.getOutputStream(), "utf-8"),
+					null);
 		}
 	}
 }

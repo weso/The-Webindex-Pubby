@@ -1,4 +1,5 @@
 package de.fuberlin.wiwiss.pubby.servlets;
+
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,20 +15,20 @@ import de.fuberlin.wiwiss.pubby.Configuration;
 import de.fuberlin.wiwiss.pubby.MappedResource;
 
 public abstract class BasePathServlet extends BaseServlet {
-	
-	private static final long serialVersionUID = 7393467141233996715L;
-	private static Pattern pattern = Pattern.compile("(-?)([^:/]*):([^:/]*)/(.*)");
 
-	public abstract boolean doGet(MappedResource resource, Property property, boolean isInverse,
-			HttpServletRequest request,
-			HttpServletResponse response,
-			Configuration config) throws IOException, ServletException;
-	
-	public boolean doGet(String relativeURI, 
-			HttpServletRequest request,
-			HttpServletResponse response,
-			Configuration config) throws IOException, ServletException {
-		
+	private static final long serialVersionUID = 7393467141233996715L;
+	private static Pattern pattern = Pattern
+			.compile("(-?)([^:/]*):([^:/]*)/(.*)");
+
+	public abstract boolean doGet(MappedResource resource, Property property,
+			boolean isInverse, HttpServletRequest request,
+			HttpServletResponse response, Configuration config)
+			throws IOException, ServletException;
+
+	public boolean doGet(String relativeURI, HttpServletRequest request,
+			HttpServletResponse response, Configuration config)
+			throws IOException, ServletException {
+
 		Matcher matcher = pattern.matcher(relativeURI);
 		if (!matcher.matches()) {
 			return false;
@@ -38,8 +39,8 @@ public abstract class BasePathServlet extends BaseServlet {
 		if (config.getPrefixes().getNsPrefixURI(prefix) == null) {
 			return false;
 		}
-		Property property = ResourceFactory.createProperty(
-				config.getPrefixes().getNsPrefixURI(prefix), localName);
+		Property property = ResourceFactory.createProperty(config.getPrefixes()
+				.getNsPrefixURI(prefix), localName);
 		MappedResource resource = config.getMappedResourceFromRelativeWebURI(
 				matcher.group(4), false);
 		doGet(resource, property, isInverse, request, response, config);
