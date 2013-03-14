@@ -23,6 +23,7 @@ import de.fuberlin.wiwiss.pubby.ResourceDescription;
 import de.fuberlin.wiwiss.pubby.ResourceDescription.Value;
 import es.weso.model.Country;
 import es.weso.model.Organization;
+import es.weso.model.Person;
 import es.weso.model.Region;
 import es.weso.util.Conf;
 
@@ -133,6 +134,13 @@ public class PageURLServlet extends BaseURLServlet {
 				context.put(entry.getKey(), entry.getValue());
 			}
 			context.put("type", "organization");
+		} else if (type.equalsIgnoreCase("person")) {
+			Map<String, String> personInfo = new Person()
+					.getPersonData(properties);
+			for (Map.Entry<String, String> entry : personInfo.entrySet()) {
+				context.put(entry.getKey(), entry.getValue());
+			}
+			context.put("type", "person");
 		} else {
 			context.put("type", ".");
 		}

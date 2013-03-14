@@ -91,6 +91,7 @@ public class RequestParamHandler {
 			return super.getHeader(name);
 		}
 
+		@SuppressWarnings("unchecked")
 		public Enumeration<String> getHeaderNames() {
 			final Enumeration<String> realHeaders = super.getHeaderNames();
 			return new Enumeration<String>() {
@@ -112,6 +113,7 @@ public class RequestParamHandler {
 			};
 		}
 
+		@SuppressWarnings("unchecked")
 		public Enumeration<String> getHeaders(String name) {
 			if ("accept".equals(name.toLowerCase())) {
 				Vector<String> v = new Vector<String>();

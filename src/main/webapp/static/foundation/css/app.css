@@ -12,7 +12,7 @@ hr {
 	border-top: 1px solid #99CC33;
 }
 
-#flag {
+#flag, .image {
 	width: 128px;
 	float: right;
 }
