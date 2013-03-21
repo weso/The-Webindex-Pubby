@@ -2,24 +2,27 @@ package de.fuberlin.wiwiss.pubby.servlets;
 
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 /**
- * Analyzes an HttpServletRequest to check for the presence of an ?output=n3 or
- * =ttl or =rdfxml request parameter in the URI. If present, returns a modified
- * HttpServletRequest that has the appropriate MIME type in the Accept: header.
- * This request can then be fed into the rest of our content negotiation based
- * tooling.
+ * Analyzes an HttpServletRequest to check for the presence
+ * of an ?output=n3 or =ttl or =rdfxml request parameter in
+ * the URI. If present, returns a modified HttpServletRequest
+ * that has the appropriate MIME type in the Accept: header.
+ * This request can then be fed into the rest of our content
+ * negotiation based tooling.
  * 
  * @author Richard Cyganiak (richard@cyganiak.de)
  * @version $Id$
  */
 public class RequestParamHandler {
-	private static final String ATTRIBUTE_NAME_IS_HANDLED = "OutputRequestParamHandler.isHandled";
-	private final static HashMap<String, String> mimeTypes = new HashMap<String, String>();
+	private static final String ATTRIBUTE_NAME_IS_HANDLED =
+		"OutputRequestParamHandler.isHandled";
+	private final static Map<String,String> mimeTypes = new HashMap<String,String>();
 	static {
 		mimeTypes.put("rdfxml", "application/rdf+xml");
 		mimeTypes.put("xml", "application/rdf+xml");
@@ -32,13 +35,15 @@ public class RequestParamHandler {
 		// Turtle.
 		mimeTypes.put("ttl", "text/rdf+n3;charset=utf-8");
 		mimeTypes.put("turtle", "text/rdf+n3;charset=utf-8");
-		// mimeTypes.put("turtle", "application/x-turtle");
-		// mimeTypes.put("ttl", "application/x-turtle");
+//		mimeTypes.put("turtle", "application/x-turtle");
+//		mimeTypes.put("ttl", "application/x-turtle");
 		mimeTypes.put("n3", "text/rdf+n3;charset=utf-8");
 		mimeTypes.put("nt", "text/plain");
 		mimeTypes.put("text", "text/plain");
+		
+		mimeTypes.put("jsonp", "application/javascript");
 	}
-
+	
 	/**
 	 * Removes the "output=foobar" part of a URI if present.
 	 */
@@ -48,10 +53,9 @@ public class RequestParamHandler {
 		// this is matched by the first part: [?&]param$
 		// Or it can occur elsewhere, then it's matched by param& with a
 		// lookbehind that requires [?&] to occur before the pattern.
-		return uri.replaceFirst(
-				"([?&]output=[a-z0-9]*$)|((?<=[?&])output=[a-z0-9]*&)", "");
+		return uri.replaceFirst("([?&]output=[a-z0-9]*$)|((?<=[?&])output=[a-z0-9]*&)", "");
 	}
-
+	
 	private final HttpServletRequest request;
 	private final String requestedType;
 
@@ -59,7 +63,7 @@ public class RequestParamHandler {
 		this.request = request;
 		requestedType = identifyRequestedType(request.getParameter("output"));
 	}
-
+	
 	public boolean isMatchingRequest() {
 		if ("true".equals(request.getAttribute(ATTRIBUTE_NAME_IS_HANDLED))) {
 			return false;
@@ -70,53 +74,50 @@ public class RequestParamHandler {
 	public HttpServletRequest getModifiedRequest() {
 		return new WrappedRequest();
 	}
-
+	
 	private String identifyRequestedType(String parameterValue) {
 		if (mimeTypes.containsKey(parameterValue)) {
 			return parameterValue;
 		}
 		return null;
 	}
-
+	
+	@SuppressWarnings("rawtypes")	// The API uses raw types
 	private class WrappedRequest extends HttpServletRequestWrapper {
 		WrappedRequest() {
 			super(request);
 			setAttribute(ATTRIBUTE_NAME_IS_HANDLED, "true");
 		}
-
+		@Override
 		public String getHeader(String name) {
 			if ("accept".equals(name.toLowerCase())) {
-				return mimeTypes.get(requestedType);
+				return (String) mimeTypes.get(requestedType);
 			}
 			return super.getHeader(name);
 		}
-
-		@SuppressWarnings("unchecked")
-		public Enumeration<String> getHeaderNames() {
-			final Enumeration<String> realHeaders = super.getHeaderNames();
-			return new Enumeration<String>() {
+		@Override
+		public Enumeration getHeaderNames() {
+			final Enumeration realHeaders = super.getHeaderNames();
+			return new Enumeration() {
 				private String prefetched = null;
-
 				public boolean hasMoreElements() {
 					while (prefetched == null && realHeaders.hasMoreElements()) {
-						String next = realHeaders.nextElement();
+						String next = (String) realHeaders.nextElement();
 						if (!"accept".equals(next.toLowerCase())) {
 							prefetched = next;
 						}
 					}
 					return (prefetched != null);
 				}
-
-				public String nextElement() {
+				public Object nextElement() {
 					return prefetched;
 				}
 			};
 		}
-
-		@SuppressWarnings("unchecked")
-		public Enumeration<String> getHeaders(String name) {
+		@Override
+		public Enumeration getHeaders(String name) {
 			if ("accept".equals(name.toLowerCase())) {
-				Vector<String> v = new Vector<String>();
+				Vector<Object> v = new Vector<Object>();
 				v.add(getHeader(name));
 				return v.elements();
 			}

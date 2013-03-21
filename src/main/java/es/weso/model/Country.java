@@ -49,6 +49,7 @@ public class Country {
 	 */
 	public Map<String, String> getCountryData(
 			Map<String, List<Value>> properties) {
+		log.info("Getting country data");
 		Map<String, String> context = new HashMap<String, String>();
 		String name = properties.get(Conf.getVocab("rdfs.label")).get(0)
 				.getNode().toString();

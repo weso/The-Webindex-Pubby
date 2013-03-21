@@ -1,20 +1,28 @@
 package de.fuberlin.wiwiss.pubby;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.NoSuchElementException;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFWriter;
+import com.hp.hpl.jena.rdf.model.ResIterator;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.impl.PropertyImpl;
 import com.hp.hpl.jena.shared.JenaException;
 
 import de.fuberlin.wiwiss.pubby.negotiation.ContentTypeNegotiator;
 import de.fuberlin.wiwiss.pubby.negotiation.MediaRangeSpec;
 import de.fuberlin.wiwiss.pubby.negotiation.PubbyNegotiator;
 import de.fuberlin.wiwiss.pubby.servlets.RequestParamHandler;
+import es.weso.model.cacheable.SerializableCountry;
+import es.weso.util.Conf;
 
 /**
  * Calls into Joseki to send a Jena model over HTTP. This gives us content
@@ -88,6 +96,9 @@ public class ModelResponse {
 		if ("text/rdf+n3;charset=utf-8".equals(mediaType)) {
 			return new TurtleWriter();
 		}
+		if ("application/javascript".equals(mediaType)) {
+			return new JSONPWriter();
+		}
 		return new NTriplesWriter();
 	}
 
@@ -124,5 +135,50 @@ public class ModelResponse {
 					new OutputStreamWriter(response.getOutputStream(), "utf-8"),
 					null);
 		}
+	}
+
+	/**
+	 * Writes the response in JSONP
+	 * 
+	 * @author <a href="http://alejandro-montes.appspot.com">Alejandro Montes
+	 *         García</a>
+	 * @since 20/03/2013
+	 * @version 1.0
+	 */
+	private class JSONPWriter implements ModelWriter {
+
+		public void write(Model model, HttpServletResponse response)
+				throws IOException {
+			response.setContentType("application/javascript");
+			OutputStream os = response.getOutputStream();
+			os.write("callback(".getBytes());
+			if (isCountry(model)) {
+				try {
+					Property p = new PropertyImpl(Conf.getVocab("rdfs.label"));
+					String name = model.listSubjectsWithProperty(p).next()
+							.getProperty(p).getString();
+					os.write(new SerializableCountry(name).toString()
+							.getBytes());
+				} catch (NoSuchElementException e) {
+					os.write("{\"Error\" : \"Unknown country\"}".getBytes());
+				}
+			} else {
+				os.write("{\"Error\" : \"JSONP is only supported for countries\"}"
+						.getBytes());
+			}
+			os.write(");".getBytes());
+			os.close();
+		}
+
+		private boolean isCountry(Model model) {
+			Property p = new PropertyImpl(Conf.getVocab("rdf.type"));
+			ResIterator iter = model.listSubjectsWithProperty(p);
+			while (iter.hasNext()) {
+				Statement stmt = iter.next().getProperty(p);
+				return stmt.getResource().toString().endsWith("/Country");
+			}
+			return false;
+		}
+
 	}
 }

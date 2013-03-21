@@ -17,16 +17,24 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
  */
 public class ModelTranslator {
 	private final Model model;
+	private final Dataset dataset;
 	private final Configuration serverConfig;
 
-	public ModelTranslator(Model model, Configuration configuration) {
+	public ModelTranslator(Model model, Dataset dataset,
+			Configuration configuration) {
 		this.model = model;
+		this.dataset = dataset;
 		this.serverConfig = configuration;
 	}
 
 	public Model getTranslated() {
 		Model result = ModelFactory.createDefaultModel();
-		result.setNsPrefixes(serverConfig.getPrefixes());
+		result.setNsPrefixes(model);
+		for (String prefix : serverConfig.getPrefixes().getNsPrefixMap()
+				.keySet()) {
+			result.setNsPrefix(prefix, serverConfig.getPrefixes()
+					.getNsPrefixURI(prefix));
+		}
 		StmtIterator it = model.listStatements();
 		while (it.hasNext()) {
 			Statement stmt = it.nextStatement();
@@ -47,10 +55,10 @@ public class ModelTranslator {
 	}
 
 	private String getPublicURI(String datasetURI) {
-		MappedResource resource = serverConfig
-				.getMappedResourceFromDatasetURI(datasetURI);
+		MappedResource resource = dataset.getMappedResourceFromDatasetURI(
+				datasetURI, serverConfig);
 		if (resource == null)
 			return datasetURI;
-		return resource.getWebURI();
+		return resource.getController().getAbsoluteIRI();
 	}
 }

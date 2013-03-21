@@ -18,4 +18,4 @@
 	<a href="#meta" onclick="showAllMetadata('metadata-tables')">expand all</a>
 #end
 
-#parse("footer.vm")
+#parse("${type}/footer.vm")

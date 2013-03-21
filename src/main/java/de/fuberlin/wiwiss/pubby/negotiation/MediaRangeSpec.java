@@ -17,16 +17,16 @@ public class MediaRangeSpec {
 		String token = "[\\x20-\\x7E&&[^()<>@,;:\\\"/\\[\\]?={} ]]+";
 		String quotedString = "\"((?:[\\x20-\\x7E\\n\\r\\t&&[^\"\\\\]]|\\\\[\\x00-\\x7F])*)\"";
 		// See RFC 2616, section 3.6
-		String parameter = ";\\s*(?!q\\s*=)(" + token + ")=(?:(" + token + ")|"
-				+ quotedString + ")";
+		String parameter = ";\\s*(?!q\\s*=)(" + token + ")=(?:(" + token + ")|" + quotedString + ")";
 		// See RFC 2616, section 3.9
 		String qualityValue = "(?:0(?:\\.\\d{0,3})?|1(?:\\.0{0,3})?)";
-		// See RFC 2616, sections 14.1
+		// See RFC 2616, sections 14.1 
 		String quality = ";\\s*q\\s*=\\s*([^;,]*)";
 		// See RFC 2616, section 3.7
-		String regex = "(" + token + ")/(" + token + ")" + "((?:\\s*"
-				+ parameter + ")*)" + "(?:\\s*" + quality + ")?" + "((?:\\s*"
-				+ parameter + ")*)";
+		String regex = "(" + token + ")/(" + token + ")" + 
+				"((?:\\s*" + parameter + ")*)" +
+				"(?:\\s*" + quality + ")?" +
+				"((?:\\s*" + parameter + ")*)";
 		tokenPattern = Pattern.compile(token);
 		parameterPattern = Pattern.compile(parameter);
 		mediaRangePattern = Pattern.compile(regex);
@@ -34,8 +34,7 @@ public class MediaRangeSpec {
 	}
 
 	/**
-	 * Parses a media type from a string such as
-	 * <tt>text/html;charset=utf-8;q=0.9</tt>.
+	 * Parses a media type from a string such as <tt>text/html;charset=utf-8;q=0.9</tt>.
 	 */
 	public static MediaRangeSpec parseType(String mediaType) {
 		MediaRangeSpec m = parseRange(mediaType);
@@ -46,9 +45,8 @@ public class MediaRangeSpec {
 	}
 
 	/**
-	 * Parses a media range from a string such as
-	 * <tt>text/*;charset=utf-8;q=0.9</tt>. Unlike simple media types, media
-	 * ranges may include wildcards.
+	 * Parses a media range from a string such as <tt>text/*;charset=utf-8;q=0.9</tt>.
+	 * Unlike simple media types, media ranges may include wildcards.
 	 */
 	public static MediaRangeSpec parseRange(String mediaRange) {
 		Matcher m = mediaRangePattern.matcher(mediaRange);
@@ -67,12 +65,11 @@ public class MediaRangeSpec {
 		List<String> parameterValues = new ArrayList<String>();
 		while (m.find()) {
 			String name = m.group(1).toLowerCase();
-			String value = (m.group(3) == null) ? m.group(2) : unescape(m
-					.group(3));
+			String value = (m.group(3) == null) ? m.group(2) : unescape(m.group(3));
 			parameterNames.add(name);
 			parameterValues.add(value);
 		}
-		double quality = 1.0;
+		double quality = 1.0;		
 		if (qValue != null && qValuePattern.matcher(qValue).matches()) {
 			try {
 				quality = Double.parseDouble(qValue);
@@ -80,14 +77,12 @@ public class MediaRangeSpec {
 				// quality stays at default value
 			}
 		}
-		return new MediaRangeSpec(type, subtype, parameterNames,
-				parameterValues, quality);
+		return new MediaRangeSpec(type, subtype, parameterNames, parameterValues, quality);
 	}
-
+	
 	/**
 	 * Parses an HTTP Accept header into a List of MediaRangeSpecs
-	 * 
-	 * @return A List of MediaRangeSpecs
+	 * @return A List of MediaRangeSpecs 
 	 */
 	public static List<MediaRangeSpec> parseAccept(String s) {
 		List<MediaRangeSpec> result = new ArrayList<MediaRangeSpec>();
@@ -97,15 +92,15 @@ public class MediaRangeSpec {
 		}
 		return result;
 	}
-
+	
 	private static String unescape(String s) {
 		return s.replaceAll("\\\\(.)", "$1");
 	}
-
+	
 	private static String escape(String s) {
 		return s.replaceAll("[\\\\\"]", "\\\\$0");
 	}
-
+	
 	private final String type;
 	private final String subtype;
 	private final List<String> parameterNames;
@@ -113,7 +108,7 @@ public class MediaRangeSpec {
 	private final String mediaType;
 	private final double quality;
 
-	private MediaRangeSpec(String type, String subtype,
+	private MediaRangeSpec(String type, String subtype, 
 			List<String> parameterNames, List<String> parameterValues,
 			double quality) {
 		this.type = type;
@@ -123,7 +118,7 @@ public class MediaRangeSpec {
 		this.mediaType = buildMediaType();
 		this.quality = quality;
 	}
-
+	
 	private String buildMediaType() {
 		StringBuffer result = new StringBuffer();
 		result.append(type);
@@ -144,23 +139,23 @@ public class MediaRangeSpec {
 		}
 		return result.toString();
 	}
-
+	
 	public String getType() {
 		return type;
 	}
-
+	
 	public String getSubtype() {
 		return subtype;
 	}
-
+	
 	public String getMediaType() {
 		return mediaType;
 	}
-
+	
 	public List<String> getParameterNames() {
 		return parameterNames;
 	}
-
+	
 	public String getParameter(String parameterName) {
 		for (int i = 0; i < parameterNames.size(); i++) {
 			if (parameterNames.get(i).equals(parameterName.toLowerCase())) {
@@ -169,47 +164,41 @@ public class MediaRangeSpec {
 		}
 		return null;
 	}
-
+	
 	public boolean isWildcardType() {
 		return "*".equals(type);
 	}
-
+	
 	public boolean isWildcardSubtype() {
 		return !isWildcardType() && "*".equals(subtype);
 	}
-
+	
 	public double getQuality() {
 		return quality;
 	}
-
+	
 	public int getPrecedence(MediaRangeSpec range) {
-		if (range.isWildcardType())
-			return 1;
-		if (!range.type.equals(type))
-			return 0;
-		if (range.isWildcardSubtype())
-			return 2;
-		if (!range.subtype.equals(subtype))
-			return 0;
-		if (range.getParameterNames().isEmpty())
-			return 3;
+		if (range.isWildcardType()) return 1;
+		if (!range.type.equals(type)) return 0;
+		if (range.isWildcardSubtype()) return 2;
+		if (!range.subtype.equals(subtype)) return 0;
+		if (range.getParameterNames().isEmpty()) return 3;
 		int result = 3;
 		for (int i = 0; i < range.getParameterNames().size(); i++) {
 			String name = (String) range.getParameterNames().get(i);
 			String value = range.getParameter(name);
-			if (!value.equals(getParameter(name)))
-				return 0;
+			if (!value.equals(getParameter(name))) return 0;
 			result++;
 		}
 		return result;
 	}
-
+	
 	public MediaRangeSpec getBestMatch(List<MediaRangeSpec> mediaRanges) {
 		MediaRangeSpec result = null;
 		int bestPrecedence = 0;
 		Iterator<MediaRangeSpec> it = mediaRanges.iterator();
 		while (it.hasNext()) {
-			MediaRangeSpec range = it.next();
+			MediaRangeSpec range = (MediaRangeSpec) it.next();
 			if (getPrecedence(range) > bestPrecedence) {
 				bestPrecedence = getPrecedence(range);
 				result = range;
@@ -217,7 +206,7 @@ public class MediaRangeSpec {
 		}
 		return result;
 	}
-
+	
 	public String toString() {
 		return mediaType + ";q=" + quality;
 	}

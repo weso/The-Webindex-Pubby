@@ -1,9 +1,13 @@
 package de.fuberlin.wiwiss.pubby;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
@@ -24,29 +28,37 @@ public class ModelDataSource implements DataSource {
 	public String getEndpointURL() {
 		return null;
 	}
-
-	public String getResourceDescriptionURL(String resourceURI) {
-		return null;
-	}
-
+	
 	public Model getResourceDescription(String resourceURI) {
 		Model result = ModelFactory.createDefaultModel();
+		result.setNsPrefixes(model);
 		addResourceDescription(model.getResource(resourceURI), result);
 		return result;
 	}
-
+	
 	public Model getAnonymousPropertyValues(String resourceURI,
 			Property property, boolean isInverse) {
 		Resource r = model.getResource(resourceURI);
 		Model result = ModelFactory.createDefaultModel();
-		StmtIterator it = isInverse ? model.listStatements(null, property, r)
+		result.setNsPrefixes(model);
+		StmtIterator it = isInverse
+				? model.listStatements(null, property, r)
 				: r.listProperties(property);
 		while (it.hasNext()) {
 			Statement stmt = it.nextStatement();
 			RDFNode node = isInverse ? stmt.getSubject() : stmt.getObject();
-			if (!node.isAnon())
-				continue;
-			addResourceDescription((Resource) node.as(Resource.class), result);
+			if (!node.isAnon()) continue;
+			addResourceDescription((Resource) node.as(Resource.class), result); 
+		}
+		return result;
+	}
+	
+	public List<Resource> getIndex() {
+		List<Resource> result = new ArrayList<Resource>();
+		ResIterator it = model.listSubjects();
+		while (it.hasNext()) {
+			result.add(it.next());
+			if (result.size() >= DataSource.MAX_INDEX_SIZE) break; 
 		}
 		return result;
 	}

@@ -17,6 +17,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.shared.PrefixMapping;
+import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+
+import de.fuberlin.wiwiss.pubby.Configuration;
 
 /**
  * A convenient interface to an RDF description of a resource. Provides access
@@ -27,23 +30,36 @@ import com.hp.hpl.jena.shared.PrefixMapping;
  * @version $Id$
  */
 public class ResourceDescription {
-	private final MappedResource mappedResource;
+	private final HypermediaResource hypermediaResource;
 	private final Model model;
 	private final Resource resource;
 	private final Configuration config;
+	private PrefixMapping prefixes = null;
 	private List<ResourceProperty> properties = null;
 
-	public ResourceDescription(MappedResource mappedResource, Model model,
+	public ResourceDescription(HypermediaResource resource, Model model,
 			Configuration config) {
-		this.mappedResource = mappedResource;
+		this.hypermediaResource = resource;
 		this.model = model;
-		this.resource = model.getResource(mappedResource.getWebURI());
+		this.resource = model.getResource(hypermediaResource.getAbsoluteIRI());
+		this.config = config;
+	}
+
+	public ResourceDescription(Resource resource, Model model,
+			Configuration config) {
+		this.hypermediaResource = null;
+		this.model = model;
+		this.resource = resource;
 		this.config = config;
 	}
 
 	/**
-	 * @author Alejandro Montes García <alejandro.montes@weso.es>
-	 * @return A map containing all the properties of the resource
+	 * Converts the {@link ResourceDescription} into a {@link Map} of properties
+	 * and their {@link Value}s
+	 * 
+	 * @author <a href="http://alejandro-montes.appspot.com">Alejandro Montes
+	 *         GarcÃ­a</a>
+	 * @return A {@link Map} containing all the properties of the resource
 	 */
 	public Map<String, List<Value>> asMap() {
 		Map<String, List<Value>> map = new HashMap<String, List<Value>>();
@@ -53,19 +69,8 @@ public class ResourceDescription {
 		return map;
 	}
 
-	public ResourceDescription(Resource resource, Model model,
-			Configuration config) {
-		this.mappedResource = null;
-		this.model = model;
-		this.resource = resource;
-		this.config = config;
-	}
-
 	public String getURI() {
-		if (mappedResource == null) {
-			return null;
-		}
-		return mappedResource.getWebURI();
+		return resource.getURI();
 	}
 
 	public String getLabel() {
@@ -74,7 +79,7 @@ public class ResourceDescription {
 		String label = getBestLanguageMatch(candidates,
 				config.getDefaultLanguage());
 		if (label == null) {
-			return resource.getLocalName();
+			return new URIPrefixer(resource, getPrefixes()).getLocalName();
 		}
 		return label;
 	}
@@ -90,7 +95,7 @@ public class ResourceDescription {
 				.getImageProperties());
 		Iterator<RDFNode> it = candidates.iterator();
 		while (it.hasNext()) {
-			RDFNode candidate = it.next();
+			RDFNode candidate = (RDFNode) it.next();
 			if (candidate.isURIResource()) {
 				return ((Resource) candidate.as(Resource.class)).getURI();
 			}
@@ -133,23 +138,36 @@ public class ResourceDescription {
 		List<ResourceProperty> results = new ArrayList<ResourceProperty>();
 		Iterator<PropertyBuilder> it2 = propertyBuilders.values().iterator();
 		while (it2.hasNext()) {
-			PropertyBuilder propertyBuilder = it2.next();
+			PropertyBuilder propertyBuilder = (PropertyBuilder) it2.next();
 			results.add(propertyBuilder.toProperty());
 		}
 		Collections.sort(results);
 		return results;
 	}
 
+	/**
+	 * Returns a prefix mapping containing all prefixes from the input model and
+	 * from the configuration, with the configuration taking precedence.
+	 */
 	private PrefixMapping getPrefixes() {
-		return model;
+		if (prefixes == null) {
+			prefixes = new PrefixMappingImpl();
+			prefixes.setNsPrefixes(model);
+			for (String prefix : config.getPrefixes().getNsPrefixMap().keySet()) {
+				prefixes.setNsPrefix(prefix, config.getPrefixes()
+						.getNsPrefixURI(prefix));
+			}
+		}
+		return prefixes;
 	}
 
 	private Collection<RDFNode> getValuesFromMultipleProperties(
-			Collection<com.hp.hpl.jena.rdf.model.Property> properties) {
+			Collection<Property> properties) {
 		Collection<RDFNode> results = new ArrayList<RDFNode>();
-		Iterator<com.hp.hpl.jena.rdf.model.Property> it = properties.iterator();
+		Iterator<Property> it = properties.iterator();
 		while (it.hasNext()) {
-			com.hp.hpl.jena.rdf.model.Property property = it.next();
+			com.hp.hpl.jena.rdf.model.Property property = (com.hp.hpl.jena.rdf.model.Property) it
+					.next();
 			StmtIterator labelIt = resource.listProperties(property);
 			while (labelIt.hasNext()) {
 				RDFNode label = labelIt.nextStatement().getObject();
@@ -220,11 +238,12 @@ public class ResourceDescription {
 		}
 
 		public String getPathPageURL() {
-			if (mappedResource == null) {
+			if (hypermediaResource == null) {
 				return null;
 			}
-			return isInverse ? mappedResource.getInversePathPageURL(predicate)
-					: mappedResource.getPathPageURL(predicate);
+			return isInverse ? hypermediaResource
+					.getInversePathPageURL(predicate) : hypermediaResource
+					.getPathPageURL(predicate);
 		}
 
 		public int compareTo(ResourceProperty other) {
@@ -311,7 +330,11 @@ public class ResourceDescription {
 			if (uri == null)
 				return null;
 			URIPrefixer datatypePrefixer = new URIPrefixer(uri, getPrefixes());
-			return datatypePrefixer.toTurtle();
+			if (datatypePrefixer.hasPrefix()) {
+				return datatypePrefixer.toTurtle();
+			} else {
+				return "?:" + datatypePrefixer.getLocalName();
+			}
 		}
 
 		public int compareTo(Value other) {

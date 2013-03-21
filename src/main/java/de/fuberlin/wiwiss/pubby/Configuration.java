@@ -2,7 +2,7 @@ package de.fuberlin.wiwiss.pubby;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
@@ -16,6 +16,7 @@ import com.hp.hpl.jena.util.FileManager;
 import com.hp.hpl.jena.vocabulary.DC;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
+import com.hp.hpl.jena.vocabulary.XSD;
 
 import de.fuberlin.wiwiss.pubby.vocab.CONF;
 
@@ -26,13 +27,15 @@ import de.fuberlin.wiwiss.pubby.vocab.CONF;
  * @version $Id$
  */
 public class Configuration {
+	private static final String DEFAULT_PROJECT_NAME = "Untitled Dataset";
+
 	private final Model model;
 	private final Resource config;
 	private final PrefixMapping prefixes;
 	private final Collection<Property> labelProperties;
 	private final Collection<Property> commentProperties;
 	private final Collection<Property> imageProperties;
-	private final Collection<Dataset> datasets;
+	private final ArrayList<Dataset> datasets = new ArrayList<Dataset>();
 
 	public Configuration(Model configurationModel) {
 		model = configurationModel;
@@ -44,7 +47,6 @@ public class Configuration {
 		}
 		config = it.nextStatement().getSubject();
 
-		datasets = new ArrayList<Dataset>();
 		it = model.listStatements(config, CONF.dataset, (RDFNode) null);
 		while (it.hasNext()) {
 			datasets.add(new Dataset(it.nextStatement().getResource()));
@@ -87,8 +89,8 @@ public class Configuration {
 			it = config.listProperties(CONF.usePrefixesFrom);
 			while (it.hasNext()) {
 				Statement stmt = it.nextStatement();
-				prefixes.setNsPrefixes(FileManager.get().loadModel(
-						stmt.getResource().getURI()));
+				String uri = stmt.getResource().getURI();
+				prefixes.setNsPrefixes(FileManager.get().loadModel(uri));
 			}
 		} else {
 			prefixes.setNsPrefixes(model);
@@ -96,33 +98,55 @@ public class Configuration {
 		if (prefixes.getNsURIPrefix(CONF.NS) != null) {
 			prefixes.removeNsPrefix(prefixes.getNsURIPrefix(CONF.NS));
 		}
-	}
-
-	public MappedResource getMappedResourceFromDatasetURI(String datasetURI) {
-		Iterator<Dataset> it = datasets.iterator();
-		while (it.hasNext()) {
-			Dataset dataset = it.next();
-			if (dataset.isDatasetURI(datasetURI)) {
-				return dataset
-						.getMappedResourceFromDatasetURI(datasetURI, this);
-			}
+		// If no prefix is defined for the RDF and XSD namespaces, set them,
+		// unless that would overwrite something. This is the namespaces that
+		// have syntactic sugar in Turtle.
+		ModelUtil.addNSIfUndefined(prefixes, "rdf", RDF.getURI());
+		ModelUtil.addNSIfUndefined(prefixes, "xsd", XSD.getURI());
+		// If we don't have an indexResource, then add an index builder dataset
+		// as the first dataset. It will be responsible for handling the
+		// homepage/index resource.
+		if (!config.hasProperty(CONF.indexResource)) {
+			String indexURL = getWebApplicationBaseURI();
+			List<Dataset> realDatasets = new ArrayList<Dataset>(datasets);
+			Dataset indexDataset = new Dataset(new IndexDataSource(indexURL,
+					realDatasets, this), indexURL);
+			datasets.add(0, indexDataset);
 		}
-		return null;
 	}
 
-	public MappedResource getMappedResourceFromRelativeWebURI(
+	/**
+	 * @param relativeIRI
+	 *            IRI relative to the server base. Note that a request URI needs
+	 *            to be percent-decoded first.
+	 * @param stripResourcePrefix
+	 *            If true, the webResourcePrefix will be stripped to derive the
+	 *            real relative IRI.
+	 * @return
+	 */
+	public HypermediaResource getController(String relativeIRI,
+			boolean stripResourcePrefix) {
+		if (stripResourcePrefix) {
+			if (!relativeIRI.startsWith(getWebResourcePrefix()))
+				return null;
+			relativeIRI = relativeIRI
+					.substring(getWebResourcePrefix().length());
+		}
+		return new HypermediaResource(relativeIRI, this);
+	}
+
+	public Collection<MappedResource> getMappedResourcesFromRelativeWebURI(
 			String relativeWebURI, boolean isResourceURI) {
-		Iterator<Dataset> it = datasets.iterator();
-		while (it.hasNext()) {
-			Dataset dataset = it.next();
+		Collection<MappedResource> results = new ArrayList<MappedResource>();
+		for (Dataset dataset : datasets) {
 			MappedResource resource = dataset
 					.getMappedResourceFromRelativeWebURI(relativeWebURI,
 							isResourceURI, this);
-			if (resource != null) {
-				return resource;
-			}
+			if (resource == null)
+				continue;
+			results.add(resource);
 		}
-		return null;
+		return results;
 	}
 
 	public PrefixMapping getPrefixes() {
@@ -148,23 +172,40 @@ public class Configuration {
 		return config.getProperty(CONF.defaultLanguage).getString();
 	}
 
-	public MappedResource getIndexResource() {
+	public HypermediaResource getIndexResource() {
 		if (!config.hasProperty(CONF.indexResource)) {
 			return null;
 		}
-		return getMappedResourceFromDatasetURI(config
-				.getProperty(CONF.indexResource).getResource().getURI());
+		String uri = config.getProperty(CONF.indexResource).getResource()
+				.getURI();
+		String resourceBase = getWebApplicationBaseURI()
+				+ getWebResourcePrefix();
+		if (!uri.startsWith(resourceBase)) {
+			throw new RuntimeException("conf:indexResource must start with "
+					+ resourceBase);
+		}
+		return new HypermediaResource(uri.substring(resourceBase.length()),
+				this);
 	}
 
 	public String getProjectLink() {
-		return config.getProperty(CONF.projectHomepage).getResource().getURI();
+		Statement stmt = config.getProperty(CONF.projectHomepage);
+		return stmt == null ? null : stmt.getResource().getURI();
 	}
 
 	public String getProjectName() {
-		return config.getProperty(CONF.projectName).getString();
+		Statement stmt = config.getProperty(CONF.projectName);
+		return stmt == null ? DEFAULT_PROJECT_NAME : stmt.getString();
 	}
 
 	public String getWebApplicationBaseURI() {
 		return config.getProperty(CONF.webBase).getResource().getURI();
+	}
+
+	public String getWebResourcePrefix() {
+		if (config.hasProperty(CONF.webResourcePrefix)) {
+			return config.getProperty(CONF.webResourcePrefix).getString();
+		}
+		return "";
 	}
 }

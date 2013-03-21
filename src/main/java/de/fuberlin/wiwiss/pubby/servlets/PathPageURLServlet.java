@@ -2,6 +2,7 @@ package de.fuberlin.wiwiss.pubby.servlets;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +18,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 
 import de.fuberlin.wiwiss.pubby.Configuration;
+import de.fuberlin.wiwiss.pubby.HypermediaResource;
 import de.fuberlin.wiwiss.pubby.MappedResource;
 import de.fuberlin.wiwiss.pubby.ResourceDescription;
 
@@ -29,19 +31,18 @@ import de.fuberlin.wiwiss.pubby.ResourceDescription;
  */
 public class PathPageURLServlet extends BasePathServlet {
 
-	private static final long serialVersionUID = -2597664961896022667L;
-
-	public boolean doGet(MappedResource resource, Property property,
+	public boolean doGet(HypermediaResource controller,
+			Collection<MappedResource> resources, Property property,
 			boolean isInverse, HttpServletRequest request,
 			HttpServletResponse response, Configuration config)
 			throws IOException {
-		Model descriptions = getAnonymousPropertyValues(resource, property,
+		Model descriptions = getAnonymousPropertyValues(resources, property,
 				isInverse);
 		if (descriptions.size() == 0) {
 			return false;
 		}
 
-		Resource r = descriptions.getResource(resource.getWebURI());
+		Resource r = descriptions.getResource(controller.getAbsoluteIRI());
 		List<ResourceDescription> resourceDescriptions = new ArrayList<ResourceDescription>();
 		StmtIterator it = isInverse ? descriptions.listStatements(null,
 				property, r) : r.listProperties(property);
@@ -54,12 +55,12 @@ public class PathPageURLServlet extends BasePathServlet {
 					.as(Resource.class), descriptions, config));
 		}
 
-		Model description = getResourceDescription(resource);
+		Model description = getResourceDescription(resources);
 		ResourceDescription resourceDescription = new ResourceDescription(
-				resource, description, config);
+				controller, description, config);
 
 		String title = resourceDescription.getLabel()
-				+ (isInverse ? " Ç " : " È ")
+				+ (isInverse ? " « " : " » ")
 				+ config.getPrefixes().getNsURIPrefix(property.getNameSpace())
 				+ ":" + property.getLocalName();
 		VelocityHelper template = new VelocityHelper(getServletContext(),
@@ -69,16 +70,16 @@ public class PathPageURLServlet extends BasePathServlet {
 		context.put("project_link", config.getProjectLink());
 		context.put("title", title);
 		context.put("server_base", config.getWebApplicationBaseURI());
-		context.put("sparql_endpoint", resource.getDataset().getDataSource()
-				.getEndpointURL());
-		context.put("back_uri", resource.getWebURI());
+		context.put("sparql_endpoint", getFirstSPARQLEndpoint(resources));
+		context.put("back_uri", controller.getAbsoluteIRI());
 		context.put("back_label", resourceDescription.getLabel());
-		context.put(
-				"rdf_link",
-				isInverse ? resource.getInversePathDataURL(property) : resource
-						.getPathDataURL(property));
+		context.put("rdf_link",
+				isInverse ? controller.getInversePathDataURL(property)
+						: controller.getPathDataURL(property));
 		context.put("resources", resourceDescriptions);
 		template.renderXHTML("pathpage.vm");
 		return true;
 	}
+
+	private static final long serialVersionUID = -2597664961896022667L;
 }

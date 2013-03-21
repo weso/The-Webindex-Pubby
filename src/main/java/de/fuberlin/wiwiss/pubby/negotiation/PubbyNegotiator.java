@@ -16,9 +16,8 @@ public class PubbyNegotiator {
 		pubbyNegotiator.addUserAgentOverride(null, "*/*", "text/html");
 
 		// MSIE (7.0) sends either */*, or */* with a list of other random
-		// types,
-		// but always without q values. That's useless. We will simply send
-		// HTML to MSIE, no matter what. Boy, do I hate IE.
+		// types, but always without q values. That's useless. We will simply
+		// send HTML to MSIE, no matter what. Boy, do I hate IE.
 		pubbyNegotiator.addUserAgentOverride(Pattern.compile("MSIE"), null,
 				"text/html");
 
@@ -46,6 +45,7 @@ public class PubbyNegotiator {
 				.addAliasMediaType("application/turtle;q=0.8")
 				.addAliasMediaType("text/turtle;q=0.5");
 		dataNegotiator.addVariant("text/plain;q=0.2");
+		dataNegotiator.addVariant("application/javascript;q=0.7");
 	}
 
 	public static ContentTypeNegotiator getPubbyNegotiator() {

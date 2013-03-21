@@ -1,6 +1,7 @@
 package de.fuberlin.wiwiss.pubby.servlets;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,6 +12,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
 import de.fuberlin.wiwiss.pubby.Configuration;
+import de.fuberlin.wiwiss.pubby.HypermediaResource;
 import de.fuberlin.wiwiss.pubby.MappedResource;
 import de.fuberlin.wiwiss.pubby.ModelResponse;
 import de.fuberlin.wiwiss.pubby.ResourceDescription;
@@ -25,14 +27,13 @@ import de.fuberlin.wiwiss.pubby.vocab.FOAF;
  */
 public class PathDataURLServlet extends BasePathServlet {
 
-	private static final long serialVersionUID = -7927775670218866340L;
-
-	public boolean doGet(MappedResource resource, Property property,
+	public boolean doGet(HypermediaResource controller,
+			Collection<MappedResource> resources, Property property,
 			boolean isInverse, HttpServletRequest request,
 			HttpServletResponse response, Configuration config)
 			throws IOException {
 
-		Model descriptions = getAnonymousPropertyValues(resource, property,
+		Model descriptions = getAnonymousPropertyValues(resources, property,
 				isInverse);
 		if (descriptions.size() == 0) {
 			return false;
@@ -47,13 +48,13 @@ public class PathDataURLServlet extends BasePathServlet {
 				&& descriptions.getNsPrefixURI("rdfs") == null) {
 			descriptions.setNsPrefix("rdfs", RDFS.getURI());
 		}
-		Resource r = descriptions.getResource(resource.getWebURI());
+		Resource r = descriptions.getResource(controller.getAbsoluteIRI());
 		Resource document = descriptions.getResource(addQueryString(
-				isInverse ? resource.getInversePathDataURL(property) : resource
-						.getPathDataURL(property), request));
+				isInverse ? controller.getInversePathDataURL(property)
+						: controller.getPathDataURL(property), request));
 		document.addProperty(FOAF.primaryTopic, r);
-		String resourceLabel = new ResourceDescription(resource, descriptions,
-				config).getLabel();
+		String resourceLabel = new ResourceDescription(controller,
+				descriptions, config).getLabel();
 		String propertyLabel = config.getPrefixes().qnameFor(property.getURI());
 		if (isInverse) {
 			document.addProperty(RDFS.label,
@@ -64,9 +65,13 @@ public class PathDataURLServlet extends BasePathServlet {
 					"RDF description of resources that are " + propertyLabel
 							+ " of " + resourceLabel);
 		}
-		resource.getDataset().addDocumentMetadata(descriptions, document);
+		for (MappedResource resource : resources) {
+			resource.getDataset().addDocumentMetadata(descriptions, document);
+		}
 
 		new ModelResponse(descriptions, request, response).serve();
 		return true;
 	}
+
+	private static final long serialVersionUID = -7927775670218866340L;
 }

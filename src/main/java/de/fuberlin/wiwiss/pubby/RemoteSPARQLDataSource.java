@@ -1,11 +1,13 @@
 package de.fuberlin.wiwiss.pubby;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.engine.http.QueryEngineHTTP;
 
 /**
@@ -13,44 +15,38 @@ import com.hp.hpl.jena.sparql.engine.http.QueryEngineHTTP;
  * protocol.
  * 
  * @author Richard Cyganiak (richard@cyganiak.de)
+ * @author Sergio Fernandez (sergio.fernandez@fundacionctic.org)
  * @version $Id$
  */
 public class RemoteSPARQLDataSource implements DataSource {
-	private String endpointURL;
-	private String defaultGraphName;
+	private final String endpointURL;
+	private final String defaultGraphName;
 	private String previousDescribeQuery;
+	private String contentType = null;
 
-	public RemoteSPARQLDataSource(String endpointURL, String defaultGraphName) {
+	public RemoteSPARQLDataSource(String endpointURL, String graphName) {
 		this.endpointURL = endpointURL;
-		this.defaultGraphName = defaultGraphName;
+		this.defaultGraphName = graphName;
+	}
+
+	/**
+	 * Sets the content type to ask for in the request to the remote SPARQL
+	 * endpoint.
+	 */
+	public void setContentType(String mediaType) {
+		this.contentType = mediaType;
 	}
 
 	public String getEndpointURL() {
 		return endpointURL;
 	}
 
-	public String getResourceDescriptionURL(String resourceURI) {
-		try {
-			StringBuffer result = new StringBuffer();
-			result.append(endpointURL);
-			result.append("?");
-			if (defaultGraphName != null) {
-				result.append("default-graph-uri=");
-				result.append(URLEncoder.encode(defaultGraphName, "utf-8"));
-				result.append("&");
-			}
-			result.append("query=");
-			result.append(URLEncoder.encode("DESCRIBE <" + resourceURI + ">",
-					"utf-8"));
-			return result.toString();
-		} catch (UnsupportedEncodingException ex) {
-			// can't happen, utf-8 is always supported
-			throw new RuntimeException(ex);
-		}
+	private String buildDescribeQuery(String resourceURI) {
+		return "DESCRIBE <" + resourceURI + ">";
 	}
 
 	public Model getResourceDescription(String resourceURI) {
-		return execDescribeQuery("DESCRIBE <" + resourceURI + ">");
+		return execDescribeQuery(buildDescribeQuery(resourceURI));
 	}
 
 	public Model getAnonymousPropertyValues(String resourceURI,
@@ -61,6 +57,17 @@ public class RemoteSPARQLDataSource implements DataSource {
 						+ property.getURI() + "> ?x . ")
 				+ "FILTER (isBlank(?x)) }";
 		return execDescribeQuery(query);
+	}
+
+	public List<Resource> getIndex() {
+		List<Resource> result = new ArrayList<Resource>();
+		ResultSet rs = execSelectQuery("SELECT DISTINCT ?s { " + "?s ?p ?o "
+				+ "FILTER (isURI(?s)) " + "} LIMIT "
+				+ DataSource.MAX_INDEX_SIZE);
+		while (rs.hasNext()) {
+			result.add(rs.next().getResource("s"));
+		}
+		return result;
 	}
 
 	public String getPreviousDescribeQuery() {
@@ -74,6 +81,18 @@ public class RemoteSPARQLDataSource implements DataSource {
 			endpoint.setDefaultGraphURIs(Collections
 					.singletonList(defaultGraphName));
 		}
+		if (contentType != null) {
+			endpoint.setModelContentType(contentType);
+		}
 		return endpoint.execDescribe();
+	}
+
+	private ResultSet execSelectQuery(String query) {
+		QueryEngineHTTP endpoint = new QueryEngineHTTP(endpointURL, query);
+		if (defaultGraphName != null) {
+			endpoint.setDefaultGraphURIs(Collections
+					.singletonList(defaultGraphName));
+		}
+		return endpoint.execSelect();
 	}
 }

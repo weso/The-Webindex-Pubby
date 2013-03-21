@@ -1,15 +1,16 @@
 package de.fuberlin.wiwiss.pubby;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
 
 /**
- * Helper class that splits URIs into prefix and local name according to a Jena
- * PrefixMapping.
+ * Helper class that splits URIs into prefix and local name
+ * according to a Jena PrefixMapping.
  * 
  * @author Richard Cyganiak (richard@cyganiak.de)
  * @version $Id$
@@ -22,16 +23,14 @@ public class URIPrefixer {
 	public URIPrefixer(String uri, PrefixMapping prefixes) {
 		this(ResourceFactory.createResource(uri), prefixes);
 	}
-
+	
 	public URIPrefixer(Resource resource, PrefixMapping prefixes) {
 		this.resource = resource;
 		String uri = resource.getURI();
-		Iterator<Entry<String, String>> it = prefixes.getNsPrefixMap()
-				.entrySet().iterator();
+		Iterator<String> it = prefixes.getNsPrefixMap().keySet().iterator();
 		while (it.hasNext()) {
-			Entry<String, String> entry = it.next();
-			String entryPrefix = entry.getKey();
-			String entryURI = entry.getValue();
+			String entryPrefix = it.next();
+			String entryURI = prefixes.getNsPrefixURI(entryPrefix);
 			if (uri.startsWith(entryURI)) {
 				prefix = entryPrefix;
 				localName = uri.substring(entryURI.length());
@@ -41,22 +40,26 @@ public class URIPrefixer {
 		prefix = null;
 		localName = null;
 	}
-
+	
 	public boolean hasPrefix() {
 		return prefix != null;
 	}
-
+	
 	public String getPrefix() {
 		return prefix;
 	}
-
+	
 	public String getLocalName() {
 		if (localName == null) {
-			return resource.getLocalName();
+			Matcher matcher = Pattern.compile("([^#/:?]+)[#/:?]*$").matcher(resource.getURI());
+			if (matcher.find()) {
+				return matcher.group(1);
+			}
+			return "";	// Only happens if the URI contains only excluded chars
 		}
 		return localName;
 	}
-
+	
 	public String toTurtle() {
 		if (hasPrefix()) {
 			return getPrefix() + ":" + getLocalName();
