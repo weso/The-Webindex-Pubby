@@ -1,4 +1,5 @@
 package de.fuberlin.wiwiss.pubby.servlets;
+
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Collection;
@@ -26,11 +27,12 @@ import es.weso.model.Country;
 import es.weso.model.Organization;
 import es.weso.model.Person;
 import es.weso.model.Region;
+import es.weso.restclient.RestClient;
 import es.weso.util.Conf;
 
 /**
- * A servlet for serving the HTML page describing a resource.
- * Invokes a Velocity template.
+ * A servlet for serving the HTML page describing a resource. Invokes a Velocity
+ * template.
  * 
  * @author Richard Cyganiak (richard@cyganiak.de)
  * @version $Id$
@@ -38,28 +40,28 @@ import es.weso.util.Conf;
 public class PageURLServlet extends BaseURLServlet {
 
 	public boolean doGet(HypermediaResource controller,
-			Collection<MappedResource> resources, 
-			HttpServletRequest request,
-			HttpServletResponse response,
-			Configuration config) throws ServletException, IOException {
+			Collection<MappedResource> resources, HttpServletRequest request,
+			HttpServletResponse response, Configuration config)
+			throws ServletException, IOException {
 
 		Model description = getResourceDescription(resources);
 
 		if (description.size() == 0) {
 			return false;
 		}
-		
+
 		Velocity.setProperty("velocimacro.context.localscope", Boolean.TRUE);
-		
+
 		ResourceDescription resourceDescription = new ResourceDescription(
 				controller, description, config);
-		String discoLink = "http://www4.wiwiss.fu-berlin.de/rdf_browser/?browse_uri=" +
-				URLEncoder.encode(controller.getAbsoluteIRI(), "utf-8");
-		String tabulatorLink = "http://dig.csail.mit.edu/2005/ajar/ajaw/tab.html?uri=" +
-				URLEncoder.encode(controller.getAbsoluteIRI(), "utf-8");
-		String openLinkLink = "http://linkeddata.uriburner.com/ode/?uri=" +
-				URLEncoder.encode(controller.getAbsoluteIRI(), "utf-8");
-		VelocityHelper template = new VelocityHelper(getServletContext(), response);
+		String discoLink = "http://www4.wiwiss.fu-berlin.de/rdf_browser/?browse_uri="
+				+ URLEncoder.encode(controller.getAbsoluteIRI(), "utf-8");
+		String tabulatorLink = "http://dig.csail.mit.edu/2005/ajar/ajaw/tab.html?uri="
+				+ URLEncoder.encode(controller.getAbsoluteIRI(), "utf-8");
+		String openLinkLink = "http://linkeddata.uriburner.com/ode/?uri="
+				+ URLEncoder.encode(controller.getAbsoluteIRI(), "utf-8");
+		VelocityHelper template = new VelocityHelper(getServletContext(),
+				response);
 		Context context = template.getVelocityContext();
 		context.put("project_name", config.getProjectName());
 		context.put("project_link", config.getProjectLink());
@@ -77,29 +79,31 @@ public class PageURLServlet extends BaseURLServlet {
 		getProperties(resourceDescription, context);
 		try {
 			Model metadata = ModelFactory.createDefaultModel();
-			for (MappedResource resource: resources) {
-				Resource documentRepresentation = resource.getDataset().addMetadataFromTemplate( metadata, resource, getServletContext() );
+			for (MappedResource resource : resources) {
+				Resource documentRepresentation = resource.getDataset()
+						.addMetadataFromTemplate(metadata, resource,
+								getServletContext());
 				// Replaced the commented line by the following one because the
 				// RDF graph we want to talk about is a specific representation
 				// of the data identified by the getDataURL() URI.
-				//                                       Olaf, May 28, 2010
-				// context.put("metadata", metadata.getResource(resource.getDataURL()));
+				// Olaf, May 28, 2010
+				// context.put("metadata",
+				// metadata.getResource(resource.getDataURL()));
 				context.put("metadata", documentRepresentation);
 			}
 
-			Map<String,String> nsSet = metadata.getNsPrefixMap();
+			Map<String, String> nsSet = metadata.getNsPrefixMap();
 			nsSet.putAll(description.getNsPrefixMap());
 			context.put("prefixes", nsSet.entrySet());
-			context.put("blankNodesMap", new HashMap<Resource,String>());
-		}
-		catch (Exception e) {
+			context.put("blankNodesMap", new HashMap<Resource, String>());
+		} catch (Exception e) {
 			context.put("metadata", Boolean.FALSE);
 		}
-	
+
 		template.renderXHTML("page.vm");
 		return true;
 	}
-	
+
 	/**
 	 * Checks the type of an entity and gets the data from it
 	 * 
@@ -116,11 +120,8 @@ public class PageURLServlet extends BaseURLServlet {
 		String type = properties.get(Conf.getVocab("rdf.type")).get(0)
 				.getLocalName();
 		if (type.equalsIgnoreCase("country")) {
-			Map<String, String> countryProperties = new Country()
-					.getCountryData(properties);
-			for (Map.Entry<String, String> entry : countryProperties.entrySet()) {
-				context.put(entry.getKey(), entry.getValue());
-			}
+			getCountryData(context, properties.get(Conf.getVocab("iso-alpha2"))
+					.get(0).getNode().toString().toLowerCase());
 			context.put("type", "country");
 		} else if (type.equalsIgnoreCase("region")) {
 			context.put("countries", new Region().getCountryCodes(properties));
@@ -142,6 +143,33 @@ public class PageURLServlet extends BaseURLServlet {
 		} else {
 			context.put("type", ".");
 		}
+	}
+
+	private void getCountryData(Context context, String countryCode) {
+		RestClient client = new RestClient();
+		Country country = client.getCountry("2011", countryCode.replaceAll("\"", ""));
+		context.put("lat", country.getLat());
+		context.put("lon", country.getLon());
+		context.put("country_code", country.getCode_iso_alpha2());
+		getRank(context, country, "global");
+		getRank(context, country, "readiness");
+		getRank(context, country, "web");
+		getRank(context, country, "institutionalInfrastructure");
+		getRank(context, country, "comunicationsInfrastructure");
+		getRank(context, country, "webUse");
+		getRank(context, country, "webContent");
+		getRank(context, country, "impact");
+		getRank(context, country, "socialImpact");
+		getRank(context, country, "economicImpact");
+		getRank(context, country, "politicalImpact");
+		context.put("observations", country.getObservations());
+	}
+
+	private void getRank(Context context, Country country, String rankName) {
+		context.put(rankName + "Rank", country.getRanks().get(rankName)
+				.getPosition());
+		context.put(rankName + "Score", country.getRanks().get(rankName)
+				.getValue());
 	}
 
 	private static final long serialVersionUID = 3363621132360159793L;
