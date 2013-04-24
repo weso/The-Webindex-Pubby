@@ -1,8 +1,12 @@
 package es.weso.model;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.json.simple.JSONValue;
 
 /**
  * A single rank (position and value) that can be serialised
@@ -42,5 +46,13 @@ public class Rank implements Serializable {
 
 	public void setValue(double value) {
 		this.value = value;
+	}
+	
+	@Override
+	public String toString() {
+		Map<String, Object> properties = new HashMap<String, Object>();
+		properties.put("position", position);
+		properties.put("value", value);
+		return JSONValue.toJSONString(properties);
 	}
 }

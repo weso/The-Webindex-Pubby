@@ -11,6 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.context.Context;
 
@@ -23,11 +24,7 @@ import de.fuberlin.wiwiss.pubby.HypermediaResource;
 import de.fuberlin.wiwiss.pubby.MappedResource;
 import de.fuberlin.wiwiss.pubby.ResourceDescription;
 import de.fuberlin.wiwiss.pubby.ResourceDescription.Value;
-import es.weso.model.Country;
-import es.weso.model.Organization;
-import es.weso.model.Person;
-import es.weso.model.Region;
-import es.weso.restclient.RestClient;
+import es.weso.dataProviders.DataProvider;
 import es.weso.util.Conf;
 
 /**
@@ -38,6 +35,9 @@ import es.weso.util.Conf;
  * @version $Id$
  */
 public class PageURLServlet extends BaseURLServlet {
+
+	private static final long serialVersionUID = -96020648404097843L;
+	private static Logger log = Logger.getLogger(PageURLServlet.class);
 
 	public boolean doGet(HypermediaResource controller,
 			Collection<MappedResource> resources, HttpServletRequest request,
@@ -83,12 +83,6 @@ public class PageURLServlet extends BaseURLServlet {
 				Resource documentRepresentation = resource.getDataset()
 						.addMetadataFromTemplate(metadata, resource,
 								getServletContext());
-				// Replaced the commented line by the following one because the
-				// RDF graph we want to talk about is a specific representation
-				// of the data identified by the getDataURL() URI.
-				// Olaf, May 28, 2010
-				// context.put("metadata",
-				// metadata.getResource(resource.getDataURL()));
 				context.put("metadata", documentRepresentation);
 			}
 
@@ -119,58 +113,18 @@ public class PageURLServlet extends BaseURLServlet {
 		Map<String, List<Value>> properties = resourceDescription.asMap();
 		String type = properties.get(Conf.getVocab("rdf.type")).get(0)
 				.getLocalName();
-		if (type.equalsIgnoreCase("country")) {
-			getCountryData(context, properties.get(Conf.getVocab("iso-alpha2"))
-					.get(0).getNode().toString().toLowerCase());
-			context.put("type", "country");
-		} else if (type.equalsIgnoreCase("region")) {
-			context.put("countries", new Region().getCountryCodes(properties));
-			context.put("type", "region");
-		} else if (type.equalsIgnoreCase("organization")) {
-			Map<String, String> orgInfo = new Organization()
-					.getOrganizationInfo(properties);
-			for (Map.Entry<String, String> entry : orgInfo.entrySet()) {
+		DataProvider dp = new DataProvider(properties);
+		try {
+			Map<String, Object> data = dp.getData(type.toLowerCase());
+			for (Map.Entry<String, Object> entry : data.entrySet()) {
 				context.put(entry.getKey(), entry.getValue());
 			}
-			context.put("type", "organization");
-		} else if (type.equalsIgnoreCase("person")) {
-			Map<String, String> personInfo = new Person()
-					.getPersonData(properties);
-			for (Map.Entry<String, String> entry : personInfo.entrySet()) {
-				context.put(entry.getKey(), entry.getValue());
-			}
-			context.put("type", "person");
-		} else {
+		} catch (ReflectiveOperationException e) {
+			log.error("Method not found, returning default visualization", e);
+			context.put("type", ".");
+		} catch (RuntimeException e) {
+			log.error(e.getMessage() + "Returning default visualization", e);
 			context.put("type", ".");
 		}
 	}
-
-	private void getCountryData(Context context, String countryCode) {
-		RestClient client = new RestClient();
-		Country country = client.getCountry("2011", countryCode.replaceAll("\"", ""));
-		context.put("lat", country.getLat());
-		context.put("lon", country.getLon());
-		context.put("country_code", country.getCode_iso_alpha2());
-		getRank(context, country, "global");
-		getRank(context, country, "readiness");
-		getRank(context, country, "web");
-		getRank(context, country, "institutionalInfrastructure");
-		getRank(context, country, "comunicationsInfrastructure");
-		getRank(context, country, "webUse");
-		getRank(context, country, "webContent");
-		getRank(context, country, "impact");
-		getRank(context, country, "socialImpact");
-		getRank(context, country, "economicImpact");
-		getRank(context, country, "politicalImpact");
-		context.put("observations", country.getObservations());
-	}
-
-	private void getRank(Context context, Country country, String rankName) {
-		context.put(rankName + "Rank", country.getRanks().get(rankName)
-				.getPosition());
-		context.put(rankName + "Score", country.getRanks().get(rankName)
-				.getValue());
-	}
-
-	private static final long serialVersionUID = 3363621132360159793L;
 }

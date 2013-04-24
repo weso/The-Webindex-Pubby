@@ -1,0 +1,8 @@
+target/
+logs/
+.project
+.classpath
+.settings
+bin/
+.class
+.war

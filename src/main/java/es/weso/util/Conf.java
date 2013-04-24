@@ -2,7 +2,6 @@ package es.weso.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Properties;
 
 /**
@@ -13,9 +12,8 @@ import java.util.Properties;
  */
 public class Conf {
 
-	private static Properties vocab, config, queries;
+	private static Properties vocab, config;
 
-	private static final String QUERIES_FILE = "queries.properties";
 	private static final String VOCAB_FILE = "vocab.properties";
 	private static final String CONFIG_FILE = "config.properties";
 
@@ -39,68 +37,6 @@ public class Conf {
 	 */
 	public static String getConfig(String propertyName) {
 		return getPropertyFromFile(CONFIG_FILE, config, propertyName);
-	}
-
-	/**
-	 * Gets a query from the queries file. The queries are stored in a
-	 * properties file, if they require any argument, those are specified in the
-	 * file with {i}, being i a number from zero to the maximum number of
-	 * arguments
-	 * 
-	 * @param queryName
-	 *            The name of the query
-	 * @param args
-	 *            (Optional) The arguments that the query is taking
-	 * @return The query with the {i} arguments replaced for the actual ones
-	 */
-	public static String getQuery(String queryName, String... args) {
-		String query = getPropertyFromFile(QUERIES_FILE, queries, queryName);
-		int i = 0;
-		for (String arg : args) {
-			query = query.replace("{" + i + "}", arg.trim());
-			i++;
-		}
-		return query;
-	}
-
-	/**
-	 * Gets a query from the queries file. The queries are stored in a
-	 * properties file, the argument is specified in the file with {0}
-	 * 
-	 * @param queryName
-	 *            The name of the query
-	 * @param argsList
-	 *            The possible values of the argument, those will be joint with
-	 *            an <tt>UNION</tt> clause, that works like an <tt>OR</tt>.
-	 * @return The query with the {0} argument replaced with the possible values
-	 *         it might take
-	 */
-	public static String getQuery(String queryName, Collection<String> argsList) {
-		String query = getPropertyFromFile(QUERIES_FILE, queries, queryName);
-		if (argsList.isEmpty()) {
-			return query.replace("{0}", "0");
-		}
-		String[] clauses = query.split("\\.");
-		for (String clause : clauses) {
-			if (clause.contains("{0}")) {
-				StringBuilder union = new StringBuilder();
-				String condition = clause.subSequence(0, clause.indexOf("'"))
-						.toString();
-				boolean first = true;
-				for (String arg : argsList) {
-					if (!first) {
-						union.append(" UNION ");
-					} else {
-						first = false;
-					}
-					union = union.append("{ ").append(condition).append("'")
-							.append(arg).append("' }");
-				}
-				query = query.replace(clause, union);
-				break;
-			}
-		}
-		return query;
 	}
 
 	/**

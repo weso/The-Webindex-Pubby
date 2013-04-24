@@ -1,6 +1,11 @@
 package es.weso.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.json.simple.JSONValue;
 
 
 /**
@@ -140,6 +145,16 @@ public class Observation {
 		} else if (!year.equals(other.year))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		Map<String, Object> properties = new HashMap<String, Object>();
+		properties.put("country", countryName);
+		properties.put("indicator", indicatorName);
+		properties.put("year", year);
+		properties.put("value", value);
+		return JSONValue.toJSONString(properties);
 	}
 
 }

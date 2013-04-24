@@ -154,10 +154,10 @@ public class ModelResponse {
 			os.write("callback(".getBytes());
 			if (isCountry(model)) {
 				try {
-					Property p = new PropertyImpl(Conf.getVocab("rdfs.label"));
-					String name = model.listSubjectsWithProperty(p).next()
+					Property p = new PropertyImpl(Conf.getVocab("iso-alpha2"));
+					String code = model.listSubjectsWithProperty(p).next()
 							.getProperty(p).getString();
-					os.write(new SerializableCountry(name).toString()
+					os.write(new SerializableCountry("2011", code).toString()
 							.getBytes());
 				} catch (NoSuchElementException e) {
 					os.write("{\"Error\" : \"Unknown country\"}".getBytes());
