@@ -1,6 +1,5 @@
 package es.weso.dataProviders;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -103,18 +102,12 @@ public class DataProvider {
 	 *         countries in this region
 	 */
 	public Map<String, Object> regionData() {
-		List<Value> countries = properties.get(Conf.getVocab("has-country"));
-		log.info("Retrieving countries from region");
-		String[] countryCodes = new String[countries.size()];
-		int i = 0;
+		String regionName = properties.get(Conf.getVocab("rdfs.label")).get(0)
+				.getNode().getLiteral().toString(false).replaceAll("@en", "");
+		log.info("Retrieving countries from region " + regionName);
 		RestClient client = new RestClient();
-		for (Value country : countries) {
-			countryCodes[i++] = client.getCountry("2011",
-					fromUriToISO3(country.getNode().getURI()))
-					.getCode_iso_alpha2();
-		}
 		Map<String, Object> data = new HashMap<String, Object>();
-		data.put("countries", countryCodes);
+		data.put("countries", client.getCountriesFromRegion(regionName));
 		return data;
 	}
 

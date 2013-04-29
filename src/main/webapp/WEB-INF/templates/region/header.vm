@@ -20,7 +20,7 @@
 	<script type="text/javascript" src="${server_base}static/region/script.js"></script>
 	
   </head>
-  <body onLoad='init([ #foreach( $var in $countries )#if($foreach.index>  0),#end "$var" #end ]);'>
+  <body onLoad='init([ #foreach( $var in $countries )#if($foreach.index>  0),#end "$var.code_iso_alpha2" #end ]);'>
   
 	<header class="row">
 		<div class="large-6 columns">
