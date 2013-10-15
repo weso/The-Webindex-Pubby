@@ -1,3 +1,19 @@
+# Pubby Example Configuration
+#
+# This configuration connects to the DBpedia SPARQL endpoint and
+# re-publishes on your local machine, with dereferenceable
+# localhost URIs.
+#
+# This assumes you already have a servlet container running
+# on your machine at http://localhost:8080/ .
+#
+# Install Pubby as the root webapp of your servlet container,
+# and make sure the config-file parameter in Pubby's web.xml
+# points to this configuration file.
+#
+# Then browse to http://localhost:8080/ .
+
+# Prefix declarations to be used in RDF output
 @prefix conf: <http://richard.cyganiak.de/2007/pubby/config.rdf#> .
 @prefix meta: <http://example.org/metadata#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -9,10 +25,9 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
-@prefix dbpedia: <http://dbpedia.org/resource/> .
-@prefix dbpedia-owl: <ttp://dbpedia.org/ontology/> .
-@prefix p: <http://dbpedia.org/property/> .
-@prefix yago: <http://dbpedia.org/class/yago/> .
+@prefix dbpedia: <http://localhost:8080/resource/> .
+@prefix p: <http://localhost:8080/property/> .
+@prefix yago: <http://localhost:8080/class/yago/> .
 @prefix units: <http://dbpedia.org/units/> .
 @prefix geonames: <http://www.geonames.org/ontology#> .
 @prefix prv:      <http://purl.org/net/provenance/ns#> .
@@ -21,44 +36,54 @@
 @prefix void:     <http://rdfs.org/ns/void#> .
 @prefix ir:       <http://www.ontologydesignpatterns.org/cp/owl/informationrealization.owl#> .
 
-
 # Server configuration section
 <> a conf:Configuration;
-    conf:projectName "Webfoundation | Webindex";
-    conf:projectHomepage <http://data.webfoundation.org>;
-    #conf:webBase <http://data.webfoundation.org/webindex/>;
-	conf:webBase <http://localhost:8080/pubby/>;
+    # Project name for display in page titles
+    conf:projectName "WebIndex";
+    # Homepage with description of the project for the link in the page header
+    conf:projectHomepage <http://thewebindex.org>;
+    # The Pubby root, where the webapp is running inside the servlet container.
+    conf:webBase <http://localhost:8080/webindex/>;
+    # URL of an RDF file whose prefix mapping is to be used by the
+    # server; defaults to <>, which is *this* file.
     conf:usePrefixesFrom <>;
+    # If labels and descriptions are available in multiple languages,
+    # prefer this one.
     conf:defaultLanguage "en";
-    conf:indexResource <http://data.webfoundation.org/webindex/index/ds>;
-	
+    # When the homepage of the server is accessed, this resource will
+    # be shown.
+    conf:indexResource <http://data.webfoundation.org/webindex/v2013/country/ESP>;
 
+# Dataset configuration section #1 (for DBpedia resources)
+#
+# URIs in the SPARQL endpoint: http://dbpedia.org/resource/*
+# URIs on the Web:             http://localhost:8080/resource/*
     conf:dataset [
-        conf:sparqlEndpoint <http://data.webfoundation.org/sparql>;
-        conf:sparqlDefaultGraph <http://data.webfoundation.org/webindex/>;
-        conf:datasetBase <http://data.webfoundation.org/webindex/>;
-        #conf:datasetURIPattern "webindex/.*";
+        # SPARQL endpoint URL of the dataset
+        conf:sparqlEndpoint <http://localhost:8890/sparql>;
+        # Default graph name to query (not necessary for most endpoints)
+        conf:sparqlDefaultGraph <http://localhost:8890/WebIndexSimple>;
+        # Common URI prefix of all resource URIs in the SPARQL dataset
+        conf:datasetBase <http://data.webfoundation.org/webindex/v2013/>;
+        # Will be appended to the conf:webBase to form the public
+        # resource URIs; if not present, defaults to ""
         conf:webResourcePrefix "";
+        # Fixes an issue with the server running behind an Apache proxy;
+        # can be ignored otherwise
         conf:fixUnescapedCharacters "(),'!$&*+;=@";
- 	meta:pubbyUser <http://data.webfoundation.org/webindex/organization/WESO>;
-        meta:pubbyOperator <http://data.webfoundation.org/webindex/organization/WESO>;
-        meta:endpointUser <http://data.webfoundation.org/webindex/organization/WESO>;
-        meta:endpointOperator <http://data.webfoundation.org/webindex/organization/WESO>;
-    ];
 
-conf:dataset [
-        conf:sparqlEndpoint <http://data.webfoundation.org/sparql>;
-        conf:sparqlDefaultGraph <http://data.webfoundation.org/webindex/ontology/>;
-        conf:datasetBase <http://data.webfoundation.org/webindex/>;
-        conf:datasetURIPattern "ontology/.*";
-        conf:webResourcePrefix "";
-        meta:pubbyUser <http://data.webfoundation.org/webindex/organization/WESO>;
-        meta:pubbyOperator <http://data.webfoundation.org/webindex/organization/WESO>;
-        meta:endpointUser <http://data.webfoundation.org/webindex/organization/WESO>;
-        meta:endpointOperator <http://data.webfoundation.org/webindex/organization/WESO>;
-    ];
-	
-	conf:labelProperty rdfs:label, dc:title, foaf:name;
-	conf:imageProperty foaf:depiction, dbpedia-owl:thumbnail;
+        # include metadata
+        conf:metadataTemplate "metadata.ttl";
 
-.
+        # configure your metadata here
+        # Use properties with the meta: prefix where the property name
+        # corresponds to the placeholder URIs in metadata.ttl that begin
+        # with about:metadata:metadata:
+        # Examples for such properties are:
+#        meta:pubbyUser <URI of the data publisher who uses this Pubby>;
+#        meta:pubbyOperator <URI of the service provider who operates this Pubby>;
+#        meta:endpointUser <URI of the data publisher who uses the SPARQL endpoint queried by this Pubby>;
+#        meta:endpointOperator <URI of the service provider who operates the SPARQL endpoint>;
+#        meta:endpointDataset <URI of the linked dataset that is exposed via the SPARQL endpoint>;
+    ];
+    .
